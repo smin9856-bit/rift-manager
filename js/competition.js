@@ -65,6 +65,6 @@
       p.draftFactor=(.72+p.championMastery*.0048)*(C.pool(i,cfg.year).includes(p.champion)?1:.86);
     });});return cfg;
   };
-  D.seriesLength=(lg,year,split)=>lg.region==='CN'||lg.region==='KR'&&year>=2015||lg.region==='NA'&&(year>=2025||year===2024&&(lg.tier===2||split==='summer'))||lg.region==='TW'&&year>=2025?3:1;
+  D.seriesLength=()=>1; // 정규 시즌은 항상 단판
   D.video=(id,slot)=>{const key=String(C.get(id).key).padStart(4,'0');return `https://d28xe8vt774jo5.cloudfront.net/champion-abilities/${key}/ability_${key}_${'QWER'[slot]}1.webm`;};
 })(typeof window!=='undefined'?window:globalThis);

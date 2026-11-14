@@ -33,7 +33,7 @@
   };
   const daily=L.manage.daily;
   L.manage.daily=function(){daily();const s=W.get();for(const p of Object.values(s.players)){let id=p.championTraining;if(!id&&p.t&&!W.managed(p.t))id=L.champions.pool(p.r,s.year)[Math.floor(s.day/28)%L.champions.pool(p.r,s.year).length];if(!id||L.champions.get(id)?.year>s.year)continue;p.championPractice ||= {};const skill=D.mastery(p,id),fac=s.teams[p.t]?.fac||1;p.championPractice[id]=Math.min(80,(p.championPractice[id]||0)+(.14+fac*.02)*(1-skill/130));}F.finance();F.publish();};
-  const load=W.load;W.load=function(slot){const ok=load(slot);if(ok){const s=W.get();for(const m of s.matches){const c=s.comps[m.comp];if(!m.res&&m.stage==='reg'&&c?.lid)m.bo=D.seriesLength(s.leagues[c.lid],s.year,c.split);}}return ok;};
+  const load=W.load;W.load=function(slot){const ok=load(slot);if(ok){const s=W.get();for(const m of s.matches){const c=s.comps[m.comp];if(!m.res&&m.stage==='reg'&&c?.lid)m.bo=1;}}return ok;};
   const rollover=L.manage.rollover;L.manage.rollover=function(){const before=new Set(CAvailable());rollover();const added=L.champions.available(W.get().year).filter(c=>!before.has(c.id));if(added.length)W.news('새 시즌 챔피언 합류',added.map(c=>c.name).join(', ')+' 챔피언이 출시 연도에 따라 밴픽과 훈련에 추가되었습니다.','info');};
   function CAvailable(){return L.champions.available(W.get().year).map(c=>c.id);}
   F.holiday=null;
