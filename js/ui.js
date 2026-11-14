@@ -118,12 +118,12 @@
       const slot = (i) => `<div class="slot"><span class="rolechip">${L.ROLE_KO[i]}</span><select data-chg="lineup" data-i="${i}">${ros.map((p) => `<option value="${esc(p.id)}" ${t.lineup[i] === p.id ? 'selected' : ''}>${esc(p.n)} (${L.ROLE_KO[p.r]}) — ${Math.round(L.ovr(p, i))}</option>`).join('')}</select></div>`;
       const row = (p) => {
         const st = t.lineup.indexOf(p.id), av = p.ss.g ? (p.ss.r / p.ss.g).toFixed(2) : '-';
-        return `<tr class="${st >= 0 ? 'me' : ''}"><td><span class="rolechip">${L.ROLE_KO[p.r]}</span></td><td>${pl(p)} ${st >= 0 ? '<small class="tagc">주전</small>' : ''}${W.isImport(p, t) ? '<small class="tagc imp">용병</small>' : ''}${p.list ? '<small class="tagc">판매 등록</small>' : ''}</td><td>${s.year - p.by}</td><td>${ctry(p.c)}</td>
+        return `<tr class="${st >= 0 ? 'me' : ''}"><td><span class="rolechip">${L.ROLE_KO[p.r]}</span></td><td>${pl(p)} ${st >= 0 ? '<small class="tagc">주전</small>' : ''}${W.isImport(p, t) ? '<small class="tagc imp">용병</small>' : ''}${p.list ? '<small class="tagc">판매 등록</small>' : ''}</td><td title="${L.skillDesc(L.skillOf(p))}"><span class="sktag l${L.skillOf(p)[2]}">${esc(L.skillOf(p)[0])}</span></td><td>${s.year - p.by}</td><td>${ctry(p.c)}</td>
           <td class="${oc(L.ovr(p))}"><b>${Math.round(L.ovr(p))}</b></td><td>${potStars(p)}</td><td>${bar(((p.form - 0.9) / 0.2) * 100)}</td><td>${bar(p.mor * 100)}</td><td>${p.ss.g}</td><td>${p.ss.k}/${p.ss.d}/${p.ss.a}</td><td>${av}</td><td>${money(p.wage)}</td><td class="${p.cEnd <= s.year ? 'bad' : ''}">${p.cEnd}</td></tr>`;
       };
       return `<h2>스쿼드</h2><section class="card"><h3>선발 명단 <button class="btn sm" data-act="autolineup">자동 선발</button> <span class="${imp > 2 ? 'bad' : 'dim'}">용병 ${imp}/2명</span></h3><div class="slots">${[0, 1, 2, 3, 4].map(slot).join('')}</div>
         <p class="dim sm">자기 포지션이 아닌 자리에 세우면 능력이 약 14% 떨어집니다. 선발을 바꾸면 팀 호흡이 일시적으로 내려갑니다. 선발에 용병(외국 국적)은 2명까지 넣을 수 있습니다.</p></section>
-        <section class="card">${table(['', '이름', '나이', '국적', '종합', '잠재력', '컨디션', '사기', '경기', 'K/D/A', '평점', '연봉', '계약'], ros.map(row))}</section>`;
+        <section class="card">${table(['', '이름', '고유 스킬', '나이', '국적', '종합', '잠재력', '컨디션', '사기', '경기', 'K/D/A', '평점', '연봉', '계약'], ros.map(row))}</section>`;
     },
     tactics() {
       const s = S(), t = s.teams[s.user], tac = t.tactics, lu = sim.lineup(t);
@@ -314,7 +314,7 @@
       <div class="kv k4"><span>나이</span><b>${s.year - p.by}세</b><span>국적</span><b>${ctry(p.c)}</b><span>소속</span><b>${tm(t)}</b><span>잠재력</span><b>${potStars(p)}</b>
         <span>연봉</span><b>${p.t ? money(p.wage) : '-'}</b><span>계약 만료</span><b>${p.t ? p.cEnd + '년' : '-'}</b><span>평가액</span><b>${money(W.value(p))}</b><span>선호 조합</span><b>${p.st.map((k) => L.STYLES[k].ko).join(', ')}</b>
         <span>컨디션</span><b>${bar(((p.form - 0.9) / 0.2) * 100)}</b><span>사기</span><b>${bar(p.mor * 100)}</b><span>올 시즌</span><b>${p.ss.g}경기 ${p.ss.k}/${p.ss.d}/${p.ss.a}</b><span>평점</span><b>${p.ss.g ? (p.ss.r / p.ss.g).toFixed(2) : '-'}</b></div>
-      <p class="oneline">${summary(p)} <span class="dim sm">· 능력치는 1~20, 항목에 마우스를 올리면 설명이 나옵니다</span></p><div class="attrs">${attr}</div><div class="acts">${act}</div>
+      <p class="skillline"><b>고유 스킬 · ${esc(L.skillOf(p)[0])}</b> <span class="sklv">${'◆'.repeat(L.skillOf(p)[2])}</span> <span class="dim">${L.skillDesc(L.skillOf(p))}</span></p><p class="oneline">${summary(p)} <span class="dim sm">· 능력치는 1~20, 항목에 마우스를 올리면 설명이 나옵니다</span></p><div class="attrs">${attr}</div><div class="acts">${act}</div>
       ${car.length ? `<h4>경력</h4>${table(['연도', '팀', '경기', '승', 'K/D/A', '평점', '종합'], car)}` : ''}</div>`;
     $('#modal').classList.add('on');
   };

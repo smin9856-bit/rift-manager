@@ -144,3 +144,7 @@ label.chk{margin:6px 0;color:var(--text)}
 .wb-bar{height:7px;border-radius:4px;background:#ff5a5f;overflow:hidden;margin:3px 0 1px}.wb-bar i{display:block;height:100%;background:#3b9eff;transition:width .4s}
 .wb-label{font-size:10px;letter-spacing:.12em;color:#8a99a8}
 .announce{top:20%}
+
+/* 고유 스킬 */
+.skillline{margin:10px 0 0;padding:8px 12px;border-radius:8px;background:rgba(232,193,90,.08);border:1px solid rgba(232,193,90,.25)}.skillline b{color:var(--acc2)}.sklv{color:var(--acc2);letter-spacing:2px}
+.sktag{font-size:11px;border-radius:4px;padding:1px 6px;background:#22303b;color:#b8c6d2;cursor:help}.sktag.l2{color:var(--acc2)}.sktag.l3{color:#ff9d6b;font-weight:700}

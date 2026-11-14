@@ -53,6 +53,40 @@ const CSV_ROLE = { TOP: 0, JNG: 1, JGL: 1, MID: 2, BOT: 3, ADC: 3, SUP: 4 };
 const CSV_REG = { LCK: 'KR', LPL: 'CN', LEC: 'EU', LCS: 'NA', LCP: 'TW', CBLOL: 'BR' };
 // 직접 지정한 상징 능력 (CSV에 없는 시야·팀워크 등)
 const MANUAL_SIG = { mata: { vis: 20 }, madlife: { mec: 20 }, corejj: { tw: 20 }, bengi: { clt: 20 }, score: { con: 20 }, beryl: { pool: 20 }, meiko: { tw: 20 }, wolf: { tw: 20 }, gorilla: { vis: 20 } };
+// 고유 스킬: CSV의 스킬 이름을 그대로 쓰고, 이름의 뜻에 맞는 효과를 붙인다
+const SKILL_RULES = [
+  [/고사|불변|버팀목|육각형|안정|꾸준|변함없는|정밀한 마법사|북미의 중심|북미의 황제/, 'rock'],
+  [/주사위|두두등장|변칙 돌파|기상천외|클랩스|돌발/, 'dice'],
+  [/불사대마왕|불굴|중꺾마|복구/, 'comeback'],
+  [/결승전|가을|빅게임|단판|승부사/, 'big'],
+  [/봄의/, 'spring'],
+  [/갈라쇼|처형|사냥꾼|광전사|연속/, 'streak'],
+  [/갱킹|기습/, 'gank'],
+  [/로밍/, 'roam'],
+  [/시야|길목|균형/, 'vision'],
+  [/그랩|이니시|개전|선봉|진입|점화|개척|침투/, 'engage'],
+  [/역천괴|전장의 마법사|변칙의|역할 변환/, 'flex'],
+  [/넥서스|철벽|수비|방패/, 'nexus'],
+  [/신의 오른팔|보호|팀워크|완성형 서포터/, 'cover'],
+  [/사령관|설계|지휘|조율/, 'shot'],
+  [/포식자|침략자|동선|캐리 정글러/, 'farmjg'],
+  [/황금|손길|완성형 캐리|극한 성장/, 'cs'],
+  [/룰러엔딩|후반|마무리|중후반|북미의 전설/, 'late'],
+  [/템포|초반|주도권|공격 본능|거친|공격적/, 'early'],
+  [/결투|폭군|압살|괴물|저격수|암살|타격|돌격/, 'duel'],
+  [/한타|화력|손끝/, 'tf'],
+  [/사이드|탑솔러/, 'split'],
+];
+const ROLE_SKILL = { TOP: 'split', JNG: 'farmjg', JGL: 'farmjg', MID: 'roam', BOT: 'cs', ADC: 'cs', SUP: 'vision' };
+const SKILL_L3 = new Set(['kiin', 'doran', 'faker', 'chovy', 'canyon', 'ruler', 'gala', 'keria', 'mata', 'madlife', 'bengi', 'deft', 'teddy', 'theshy', 'showmaker', 'gumayusi', 'score', 'xiaohu', 'doinb', 'rookie', 'bin', 'impact', 'corejj', 'uzi', 'kingen']);
+function csvSkill(r) {
+  const name = (r.skill || '').trim(); if (!name) return null;
+  const key = (SKILL_RULES.find(([re]) => re.test(name)) || [0, ROLE_SKILL[r.role] || 'tf'])[1];
+  const lv = SKILL_L3.has(r.name.toLowerCase()) ? 3 : r.score_basis === 'PRIOR_CURATED' ? 2 : 1;
+  return [name, key, lv];
+}
+// 선수별 고정 능력치 (나머지 항목은 종합 능력이 유지되도록 다시 맞춘다)
+const FIXED = { doran: { con: 3 } };
 const legends = new Map();
 if (fs.existsSync(REF_FILE)) for (const r of parseCsv(fs.readFileSync(REF_FILE, 'utf8'))) {
   const w = r.score_basis === 'PRIOR_CURATED' ? 1 : r.score_basis === 'HIST_ESTIMATE' ? 0.8 : r.score_basis === 'REGION_PLACEHOLDER' ? 0 : 0.5;
@@ -62,7 +96,7 @@ if (fs.existsSync(REF_FILE)) for (const r of parseCsv(fs.readFileSync(REF_FILE, 
   const mean = list.reduce((a, b) => a + b, 0) / list.length, dev = {}, sig = {};
   for (const k in vals) { dev[k] = L.clamp(((vals[k] - mean) / 5) * 1.5 * w, -3, 3); if (vals[k] >= 100 && w >= 0.8) sig[k] = 20; }
   const key = r.name.toLowerCase(); Object.assign(sig, MANUAL_SIG[key] || {});
-  const e = { dev, sig: Object.keys(sig).length ? sig : null, role: CSV_ROLE[r.role], region: CSV_REG[r.league] };
+  const e = { dev, sig: Object.keys(sig).length ? sig : null, role: CSV_ROLE[r.role], region: CSV_REG[r.league], sk: csvSkill(r), fix: FIXED[key] || null };
   if (!legends.has(key)) legends.set(key, []); legends.get(key).push(e);
 }
 for (const k in MANUAL_SIG) if (!legends.has(k)) legends.set(k, [{ dev: {}, sig: MANUAL_SIG[k], role: -1, region: null }]);
@@ -189,10 +223,15 @@ for (const year of years) {
         const ref = legend(link, (pinfo.get(link) || {}).ID, role, lg.region);
         const a = L.ATTRS.map((k) => ovr / 5 + (dz[k] || 0) * (ref ? 0.45 : 0.9) + (ref ? ref.dev[k] || 0 : 0) + h.norm(0, ref ? 0.35 : 0.85));
         for (let it = 0; it < 3; it++) { const cur = L.ovr({ a, r: role }); const d = (ovr - cur) / 5; for (let i = 0; i < 10; i++) a[i] = L.clamp(a[i] + d, 1, 20); }
+        if (ref && ref.fix) { // 고정 항목을 넣고 나머지로 종합 능력을 다시 맞춘다
+          for (const k in ref.fix) a[L.AI[k]] = ref.fix[k];
+          for (let it = 0; it < 6; it++) { const d = (ovr - L.ovr({ a, r: role })) / 5 * 1.15; for (let i = 0; i < 10; i++) if (!(L.ATTRS[i] in ref.fix)) a[i] = L.clamp(a[i] + d, 1, 20); }
+        }
         const ai = a.map((v) => Math.round(v));
         const sig = ref ? ref.sig : null;
         const info = pinfo.get(link);
         const P = { sig, id: link, n: (info && info.ID) || link.replace(/\s*\(.*\)$/, ''), rn: (info && info.Name) || '', nn: (info && info.NativeName) || '', c: (info && info.Country) || '', by: info && info.Birthdate ? Number(info.Birthdate.slice(0, 4)) : 0, r: role, t: tid, a: ai, g: s ? s.G : 0 };
+        if (ref && ref.sk) P.sk = ref.sk;
         W.players.push(P);
         const c = career.get(link) || {}; c[year] = { ovr: L.ovr(P), region: lg.region, P }; career.set(link, c);
       }

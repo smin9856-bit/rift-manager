@@ -1,5 +1,6 @@
 // 엔진 밸런스 점검: node tools/sim_test.mjs [경기수] [전력차]
 import '../js/core.js';
+import '../js/skills.js';
 import '../js/engine.js';
 const L = globalThis.LFM;
 const n = Number(process.argv[2] || 200), gap = Number(process.argv[3] || 0);

@@ -4,7 +4,7 @@ globalThis.window = globalThis;
 const store = {}; globalThis.localStorage = { getItem: (k) => store[k] || null, setItem: (k, v) => { store[k] = v; } };
 const load = (f) => (0, eval)(fs.readFileSync(new URL('../' + f, import.meta.url), 'utf8'));
 const year = Number(process.argv[2] || 2014), seasons = Number(process.argv[3] || 1);
-['data/index.js', `data/y${year}.js`, 'data/rookies.js', 'js/core.js', 'js/engine.js', 'js/world.js', 'js/sim.js', 'js/manage.js', 'js/staff.js', 'js/youth.js'].forEach(load);
+['data/index.js', `data/y${year}.js`, 'data/rookies.js', 'js/core.js', 'js/skills.js', 'js/engine.js', 'js/world.js', 'js/sim.js', 'js/manage.js', 'js/staff.js', 'js/youth.js'].forEach(load);
 const L = globalThis.LFM, W = L.world;
 const D = globalThis.LFM_DATA[year];
 const S = W.newGame({ year, mode: process.argv[4] === 'create' ? 'create' : 'team', teamId: process.argv[4] || D.leagues[0].teams[0], seed: 7, create: { name: 'Test FC', short: 'TST', color: '#f0f', region: 'KR' } });

@@ -61,7 +61,7 @@
       let a = p.a, st = p.st;
       if (tr && tr.attr) { a = p.a.slice(); const k = I[tr.attr]; a[k] = Math.min(20, a[k] + 1 + big); }
       if (c && c.trait === 'meta' && tac && !st.includes(tac.style)) st = st.concat(tac.style);
-      return { id: p.id, n: p.n, r: p.r, a, form: p.form * fm, morale: p.mor, st };
+      return { id: p.id, n: p.n, r: p.r, a, form: p.form * fm, morale: p.mor, st, sk: L.skillOf(p) };
     });
   };
   St.afterGame = function (t, win) {

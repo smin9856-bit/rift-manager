@@ -111,14 +111,20 @@
       s.players.forEach((p, role) => {
         const a = p.a, pool = a[I.pool], men = a[I.clt], con = a[I.con];
         let mult = (p.form || 1) * (1 + ((p.morale == null ? 0.5 : p.morale) - 0.5) * 0.06);
-        mult *= m.rnd.norm(1, 0.012 + (20 - con) * 0.0022);
+        const sk = p.sk || (L.skillOf ? L.skillOf(p) : null), skk = sk ? sk[1] : '', sks = sk ? L.SK_MUL[sk[2]] : 0;
+        let dice = 0;
+        mult *= m.rnd.norm(1, (0.012 + (20 - con) * 0.0022) * (skk === 'rock' ? Math.max(0.1, 1 - 0.6 * sks) : 1));
+        if (skk === 'dice') { const roll = m.rnd(); dice = roll < 0.36 ? 1 : roll > 0.64 ? -1 : 0; mult *= 1 + dice * 0.09 * sks; }
+        if (skk === 'big' && m.imp >= 0.6) mult *= 1 + 0.05 * sks;
+        if (skk === 'spring' && cfg.spring) mult *= 1 + 0.05 * sks;
+        if (skk === 'shot') side.coach += 1.5 * sks;
         mult *= 1 - m.imp * (12 - men) * 0.005;
         const st = p.st || L.playerStyles(p);
-        mult *= st.includes(side.tactics.style) ? 1.02 : 1 - (20 - pool) * 0.003;
-        if (enemyTac.ban === role) mult *= 0.99 - (20 - pool) * 0.005;
+        mult *= st.includes(side.tactics.style) || skk === 'flex' ? 1.02 : 1 - (20 - pool) * 0.003;
+        if (enemyTac.ban === role && skk !== 'flex') mult *= 0.99 - (20 - pool) * 0.005;
         if (p.r != null && p.r !== role) mult *= 0.88;
         const b = BASE[si];
-        side.players.push({
+        side.players.push({ skk, sks, skn: sk ? sk[0] : '', dice, streakUntil: 0,
           p, side: si, role, lane: LANE_OF[role], idx: si * 5 + role, x: si ? 840+(role%3)*55 : 50+(role%3)*55, y: si ? 55+Math.floor(role/3)*55 : 890-Math.floor(role/3)*55,
           px: b.x, py: b.y, hp: 600, lvl: 1, xp: 0, gold: 500, spent: 500, k: 0, d: 0, a: 0, cs: 0, dmg: 0, dead: 0,
           task: 'lane', path: null, dest: null, mult, tilt: 0, streak: 0, fight: null, hitBy: {}, say: '', sayT: 0,
@@ -141,6 +147,29 @@
   const P = Match.prototype;
 
   P.agg = function (pl) { return (this.eff(pl, I.lan) + this.eff(pl, I.mec)) / 2; }; // 공격성은 라인전·피지컬에서 나온다
+  P.skOut = function (p, F) { // 스킬에 따른 주는 피해 배수
+    const m = this, t = m.t, k = p.skk, s = p.sks; if (!k) return 1;
+    if (k === 'duel') { const n = F ? F.members.filter((x) => x.side === p.side && !x.dead).length : 1; return n <= 2 ? 1 + 0.09 * s : 1; }
+    if (k === 'tf') { const n = F ? F.members.filter((x) => x.side === p.side && !x.dead).length : 1; return n >= 4 ? 1 + 0.07 * s : 1; }
+    if (k === 'late') return t > 1500 ? 1 + 0.08 * s : 1;
+    if (k === 'early') return t < 840 ? 1 + 0.08 * s : 1;
+    if (k === 'comeback') { const on = m.teamGold(p.side) < m.teamGold(1 - p.side) - 1500; if (on && !p.cbSaid && s >= 1) { p.cbSaid = 1; m.say(p, p.skn, 6); } return on ? 1 + 0.08 * s : 1; }
+    if (k === 'streak') return t < p.streakUntil ? 1 + 0.12 * s : 1;
+    if (k === 'nexus') return m.nearOwn(p) ? 1 + 0.08 * s : 1;
+    return 1;
+  };
+  P.skIn = function (v, F) { // 스킬에 따른 받는 피해 배수
+    const m = this; let x = 1;
+    if (v.skk === 'comeback' && m.teamGold(v.side) < m.teamGold(1 - v.side) - 1500) x *= 1 - 0.06 * v.sks;
+    if (v.skk === 'nexus' && m.nearOwn(v)) x *= 1 - 0.08 * v.sks;
+    if (F) for (const q of F.members) if (q !== v && q.side === v.side && !q.dead && q.skk === 'cover') { x *= 1 - 0.05 * q.sks; break; }
+    return x;
+  };
+  P.nearOwn = function (p) {
+    const s = this.sides[p.side];
+    for (const ln of s.st) for (const st of ln) if (st.hp > 0 && Math.hypot(st.x - p.x, st.y - p.y) < 190) return true;
+    return Math.hypot(s.nx.x - p.x, s.nx.y - p.y) < 230;
+  };
   P.eff = function (pl, i) { return pl.p.a[i] * pl.mult * (1 - pl.tilt); };
   P.pow = function (pl) { return 40 + pl.lvl * 9 + pl.spent / 38; };
   P.mhp = function (pl) { return (560 + pl.lvl * 92 + pl.spent / 14) * ROLE_HP[pl.role]; };
@@ -192,6 +221,7 @@
   };
   P.strategyTick = function (dt) {
     const m = this; if (m.done) return;
+    if (!m.diceSaid && m.t > 20) { m.diceSaid = 1; for (const p of m.all) if (p.dice) m.say(p, p.dice > 0 ? '오늘은 고점!' : '오늘은 저점…', 9); }
     const t = m.t;
     if (m.visuals) m.fx = m.fx.filter(e => t - e.t < 8);
     for (const pl of m.all) {
@@ -486,7 +516,7 @@
     if (!pl.clearT) pl.clearT = t + Math.max(5, 11 - pl.lvl * 0.3);
     m.effect(pl, c, 'attack', 0);
     if (t >= pl.clearT) {
-      const q = 0.7 + m.eff(pl, I.eco) / 45; // 골드 수급이 좋은 정글러는 캠프에서 더 많이 챙긴다
+      const q = (0.7 + m.eff(pl, I.eco) / 45) * (pl.skk === 'farmjg' ? 1 + 0.08 * pl.sks : 1); // 골드 수급이 좋은 정글러는 캠프에서 더 많이 챙긴다
       pl.gold += (88 + t / 30) * q; pl.cs += 4; pl.xp += 215 * (0.84 + m.eff(pl, I.eco) / 80); c.ready = t + 135; pl.camp = -1; pl.clearT = 0;
     }
   };
@@ -520,7 +550,7 @@
     const f = m.front[g.lane], lim = m.limS(1 - pl.side, g.lane);
     const underTower = Math.abs(f - lim) < 0.06, over = (pl.side === 0 ? 0.5 - f : f - 0.5);
     const vis = en.reduce((a, e) => a + m.eff(e, I.vis), 0) / en.length * 0.6 + m.eff(o.players[SUP], I.vis) * 0.4;
-    const pEsc = clamp(0.36 + 0.024 * (vis - m.eff(pl, I.mac)) + (underTower ? 0.25 : 0) - over * 1.2 - (s.tactics.style === 'pick' ? 0.08 : 0), 0.08, 0.88);
+    const pEsc = clamp(0.36 + 0.024 * (vis - m.eff(pl, I.mac)) + (underTower ? 0.25 : 0) - over * 1.2 - (s.tactics.style === 'pick' ? 0.08 : 0) - (pl.skk === 'gank' ? 0.12 * pl.sks : pl.skk === 'roam' ? 0.08 * pl.sks : 0) + Math.max(0, ...en.concat(o.players[SUP]).map((x) => (x.skk === 'vision' ? 0.1 * x.sks : 0))), 0.06, 0.9);
     if (m.rnd() < pEsc) {
       en.forEach((e) => { e.hp = Math.max(e.hp * 0.85, 1); m.say(e, '갱킹 회피', 5); });
       m.front[g.lane] = clamp(f - dir * 0.03, 0.03, 0.97);
@@ -567,7 +597,7 @@
           pl.xp += 13.5 * share * dt;
           if (pl.role === SUP && farmers.length) { if (m.rnd() < 0.012 * dt) { pl.cs++; pl.gold += 22; } pl.gold += 1.1 * dt; continue; }
           const lan = m.eff(pl, I.lan);
-          let q = clamp(0.4 + 0.031 * (lan * 0.35 + m.eff(pl, I.eco) * 0.65) - (opp.length ? Math.max(0, oppLan - lan) * 0.014 : -0.05) - (under ? 0.05 : 0), 0.3, 1);
+          let q = clamp(0.4 + 0.031 * (lan * 0.35 + m.eff(pl, I.eco) * 0.65) - (opp.length ? Math.max(0, oppLan - lan) * 0.014 : -0.05) - (under ? 0.05 : 0) + (pl.skk === 'cs' ? 0.06 * pl.sks : 0), 0.3, 1.08);
           if (m.sides[si].tactics.focus === l) q = Math.min(1, q + 0.02);
           const n = 0.275 * q * dt * (FARM_W[pl.role] / fw) * Math.sqrt(nf2);
           let got = Math.floor(n); if (m.rnd() < n - got) got++;
@@ -654,7 +684,7 @@
       return;
     }
     const at = want[0] ? 0 : 1, df = 1 - at, a = gs[at], d = gs[df];
-    const pc = clamp(0.3 + 0.02 * (a.agg + a.mec - d.con - d.vis) + (m.sides[at].tactics.style === 'pick' ? 0.15 : 0) + (m.sides[at].tactics.style === 'dive' ? 0.08 : 0) + (a.n > d.n ? 0.1 : 0) - (d.tower ? 0.15 : 0), 0.08, 0.85);
+    const pc = clamp(0.3 + 0.02 * (a.agg + a.mec - d.con - d.vis) + (m.sides[at].tactics.style === 'pick' ? 0.15 : 0) + (m.sides[at].tactics.style === 'dive' ? 0.08 : 0) + (a.n > d.n ? 0.1 : 0) - (d.tower ? 0.15 : 0) + Math.max(0, ...grp[at].map((x) => (x.skk === 'engage' ? 0.1 * x.sks : 0))), 0.08, 0.9);
     if (m.rnd() < pc) {
       const F = m.newFight([...A, ...B]);
       const v = grp[df].slice().sort((x, y) => x.hp - y.hp)[0];
@@ -683,6 +713,7 @@
     const m = this; if (v.dead) return;
     const sup = m.sides[v.side].players[SUP];
     if (F && sup !== v && sup.fight === F && !sup.dead) amt *= 0.93 - (m.eff(sup, I.tf) - 12) * 0.004;
+    amt *= m.skIn(v, F);
     amt *= clamp(1 - 0.04 * (m.eff(v, I.con) * 0.5 + m.eff(v, I.mec) * 0.3 + m.eff(v, I.mac) * 0.2 - 12), 0.55, 1.5);
     if(kind==='poke')amt=Math.min(amt,Math.max(0,v.hp-m.mhp(v)*.08));
     v.hp -= amt;
@@ -706,7 +737,8 @@
     // 같은 교전의 서폿은 피해가 없어도 어시스트
     if (F) for (const q of F.members) if (q.side !== v.side && !q.dead && q !== killer && q.role === SUP && !assists.includes(q)) assists.push(q);
     if (killer) {
-      killer.k++; killer.streak++; killer.gold += bounty + (m.firstBlood ? 0 : 100); killer.xp += 70 + v.lvl * 22;
+      killer.k++; killer.streak++; if (killer.skk === 'streak') { killer.streakUntil = t + 10; if (killer.sks >= 1 && killer.streak === 2) m.say(killer, killer.skn + '!', 6); }
+      for (const q of assists) if (q.skk === 'streak') q.streakUntil = t + 10; killer.gold += bounty + (m.firstBlood ? 0 : 100); killer.xp += 70 + v.lvl * 22;
       for (const q of assists) { q.a++; q.gold += 150 / assists.length + 40; q.xp += (50 + v.lvl * 14) / assists.length; }
       m.ev('kill', killer.side, `${killer.p.n} ▶ ${v.p.n}` + (m.firstBlood ? '' : ' (퍼스트 블러드)'), v);
       Object.assign(m.events[m.events.length - 1], {killer:killer.champion, victim:v.champion});
@@ -750,7 +782,7 @@
           if(dist(p,p.tgt)>m.attackRange(p)+10)continue;
           p.attackReady=t+1;
           const late = p.role === ADC ? 0.85 + Math.min(1, t / 2100) * 0.4 : 1;
-          const dmg = m.pow(p) * 0.3 * ROLE_DMG[p.role] * late * m.skill(p) * tm[si] * coord * dt * m.rnd.range(0.6, 1.4);
+          const dmg = m.pow(p) * 0.3 * ROLE_DMG[p.role] * late * m.skill(p) * tm[si] * coord * dt * m.rnd.range(0.6, 1.4) * m.skOut(p, F);
           const others = live.filter((e) => e !== p.tgt), sp = others.length ? 0.28 * (0.6 + m.eff(p, I.tf) / 25) : 0;
           const ch = L.champions?.get(p.champion);
           let slot = -1;
@@ -866,7 +898,7 @@
       const def = ds.players.filter((p) => !p.dead && !p.fight && !p.recall && dist(p, st) < 175);
       const baron = t < as.baronUntil;
       let dmg = 14 * (baron ? 2.4 : 1) + (ds.st[l][3].hp <= 0 ? 16 : 0);
-      for (const p of atk) dmg += m.pow(p) * 0.66 * (p.role === ADC ? 1.5 : p.role === SUP ? 0.5 : 1) * (baron ? 1.4 : 1) * (as.tactics.style === 'poke' ? 1.12 : 1) * (as.tactics.style === 'split' && p.role === TOP ? 1.25 : 1);
+      for (const p of atk) dmg += m.pow(p) * 0.66 * (p.role === ADC ? 1.5 : p.role === SUP ? 0.5 : 1) * (baron ? 1.4 : 1) * (as.tactics.style === 'poke' ? 1.12 : 1) * (as.tactics.style === 'split' && p.role === TOP ? 1.25 : 1) * (p.skk === 'split' ? 1 + 0.2 * p.sks : 1);
       if (def.length) dmg *= clamp(0.3 + 0.22 * (atk.length - def.length), 0.18, 1);
       if (t < 300) dmg *= 0.5;
       if (st.k === 't1' && t < 840 && m.era.plates) dmg *= 0.75;

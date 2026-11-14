@@ -40,11 +40,11 @@
     return clamp(t.syn * 0.8 + (Math.max(...Object.values(cnt)) / 5) * 0.2, 0, 1);
   };
   sim.cfg = function (blue, red, m, tacB, tacR) {
-    return { seed: (W.rng()() * 2147483647) | 0, year: S().year, importance: sim.importance(m), sides: [sim.side(blue, tacB), sim.side(red, tacR)] };
+    return { seed: (W.rng()() * 2147483647) | 0, year: S().year, importance: sim.importance(m), spring: S().day < 140, sides: [sim.side(blue, tacB), sim.side(red, tacR)] };
   };
   sim.power = function (t, tac, otac) {
     const lu = L.staff.view(t, tac);
-    return lu.reduce((s, p, i) => s + L.ovr(p, i) * p.form * (1 + (p.morale - 0.5) * 0.06), 0) / 5 + (t.coach - 10) * 0.15 + (sim.synergy(t) - 0.5) * 3 + L.COUNTER[tac.style][otac.style] * 20;
+    return lu.reduce((s, p, i) => s + (L.ovr(p, i) + (p.sk[1] === 'dice' ? (W.rng()() - 0.5) * 9 * L.SK_MUL[p.sk[2]] : 0.7 * L.SK_MUL[p.sk[2]])) * p.form * (1 + (p.morale - 0.5) * 0.06), 0) / 5 + (t.coach - 10) * 0.15 + (sim.synergy(t) - 0.5) * 3 + L.COUNTER[tac.style][otac.style] * 20;
   };
 
   const KW = [0.2, 0.18, 0.25, 0.3, 0.07], DW = [0.22, 0.2, 0.19, 0.17, 0.22], AW = [0.15, 0.25, 0.2, 0.15, 0.25];
