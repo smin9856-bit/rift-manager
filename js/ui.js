@@ -125,20 +125,33 @@
   const SCREENS = {
     home() {
       const s = S(), t = s.teams[s.user], nm = W.nextUserMatch(), c = userComp(), g = t.goalNow || W.goal(t);
-      const recent = s.matches.filter((m) => m.res && (m.a === s.user || m.b === s.user)).slice(-5).reverse();
-      const rankOf = (tid) => { const lgc = s.comps[`${s.teams[tid].league}:summer`] || s.comps[`${s.teams[tid].league}:spring`]; if (!lgc) return ''; const i = W.table(W.compMatches(lgc.id, 'reg'), lgc.teams).findIndex((x) => x.t === tid); return i >= 0 ? `리그 ${i + 1}위` : ''; };
-      const side = (x, away, extra) => `<div class="md-team ${away ? 'away' : ''}">${crest(x)}<div><h2>${esc(x.name)}</h2><span>${rankOf(x.id)}${extra ? ` ${extra}` : ''}</span>${formRow(x.id)}</div></div>`;
+      const recent = s.matches.filter((m) => m.res && (m.a === s.user || m.b === s.user)).slice(-6).reverse();
+      const rowOf = (tid) => { const lgc = s.comps[s.teams[tid].league + ':summer'] || s.comps[s.teams[tid].league + ':spring']; if (!lgc) return null; const tb = W.table(W.compMatches(lgc.id, 'reg'), lgc.teams), i = tb.findIndex((x) => x.t === tid); return i < 0 ? null : { rank: i + 1, w: tb[i].w, l: tb[i].l }; };
+      const recTxt = (tid) => { const r = rowOf(tid); return r ? (r.w + r.l ? r.rank + '위, ' + r.w + '승 ' + r.l + '패' : r.rank + '위') : ''; };
+      const side = (x, away) => '<div class="mc-side ' + (away ? 'away' : '') + '" style="--tc:' + x.color + '">' + crest(x) + '<div class="mc-id"><h2>' + esc(x.name) + '</h2><span>' + recTxt(x.id) + '</span>' + formRow(x.id) + '</div></div>';
       let hero;
       if (nm) {
         const o = s.teams[nm.a === s.user ? nm.b : nm.a], cc = s.comps[nm.comp], today = nm.day === s.day;
-        hero = `<section class="matchday">${side(t, 0, `전력 ${Math.round(W.teamOvr(t))}`)}
-          <div class="md-mid"><small>${esc(cc.name)}</small><div class="vs">VS</div><em>${today ? '오늘 경기' : `${W.shortDate(nm.day, s.year)}, ${nm.day - s.day}일 뒤`}</em>${today ? `<button class="btn primary" data-act="continue">${L.net.role === 'host' ? '경기 진행' : '경기 준비'}</button>` : ''}</div>
-          ${side(o, 1, `전력 ${Math.round(W.teamOvr(o))}, ${L.STYLES[o.tactics.style].ko} 조합`)}</section>`;
-      } else hero = `<section class="matchday"><div class="md-team">${crest(t)}<div><h2>${esc(t.name)}</h2><span>${rankOf(t.id)}</span></div></div><div class="md-mid"><em>예정된 경기가 없습니다</em></div><div></div></section>`;
-      return `${hero}${todos()}<div class="home3"><div><section class="card"><h3>${esc(c.name)} 순위</h3>${standings(c, W.compMatches(c.id, 'reg'), c.teams)}</section></div>
-        <div><section class="card"><h3>구단 현황</h3><div class="kv"><span>시즌 목표</span><b>${g.text}</b><span>이사회 신임도</span><b>${bar(t.conf == null ? 60 : t.conf)} ${t.conf == null ? 60 : t.conf}</b><span>팀 전력</span><b>${starHtml(W.stars(t))} ${Math.round(W.teamOvr(t))}</b><span>팀 호흡</span><b>${bar(sim.synergy(t) * 100)} ${Math.round(sim.synergy(t) * 100)}</b><span>감독</span><b>${L.staff.of(t) ? esc(L.staff.of(t).n) : '-'}</b><span>주간 인건비</span><b>${money(Math.round(M.wages(t) / 48))}</b></div></section>
-        <section class="card"><h3>최근 경기</h3>${recent.length ? table(['날짜', '대회', '', '', ''], recent.map(matchRow)) : '<p class="dim">아직 치른 경기가 없습니다.</p>'}</section>
-        <section class="card"><h3>알림</h3>${s.news.slice(0, 6).map((n) => `<div class="newsline ${n.read ? '' : 'unread'}" data-act="go" data-s="inbox"><span class="dim">${W.shortDate(n.day, n.year)}</span><span>${esc(n.title)}</span></div>`).join('') || '<p class="dim">새 알림이 없습니다.</p>'}</section></div></div>`;
+        const po = W.teamOvr(t), oo = W.teamOvr(o), wp = Math.round(100 / (1 + Math.exp(-(po - oo) / 4.5)));
+        const fmt = nm.bo > 1 ? nm.bo + '판 ' + Math.ceil(nm.bo / 2) + '선승' : '단판';
+        const hx = (c) => { const m = /^#?([0-9a-f]{6})$/i.exec(c || ''); if (!m) return [128, 128, 128]; const n = parseInt(m[1], 16); return [n >> 16, (n >> 8) & 255, n & 255]; }, ca = hx(t.color), cbx = hx(o.color), oc2 = Math.hypot(ca[0] - cbx[0], ca[1] - cbx[1], ca[2] - cbx[2]) < 110 ? '#8a96a3' : o.color;
+        hero = '<section class="mc" style="--ca:' + t.color + ';--cb:' + oc2 + '">' + side(t, 0) +
+          '<div class="mc-mid"><span class="mc-comp">' + esc(cc.name) + '</span><b class="mc-when">' + (today ? '오늘 경기' : nm.day - s.day + '일 뒤') + '</b><span class="mc-fmt">' + W.shortDate(nm.day, s.year) + ', ' + fmt + '</span>' +
+          (today ? '<button class="btn primary" data-act="continue">' + (L.net.role === 'host' ? '경기 진행' : '경기 준비') + '</button>' : '') + '</div>' + side(o, 1) +
+          '<div class="mc-odds" title="두 팀 평균 능력으로 계산한 대략적인 승리 확률"><span>' + Math.round(po) + '</span><div class="mc-bar"><i style="width:' + wp + '%"></i><em>예상 승률 ' + wp + '%</em></div><span>' + Math.round(oo) + '</span></div></section>';
+      } else hero = '<section class="mc solo" style="--ca:' + t.color + ';--cb:' + t.color + '">' + side(t, 0) + '<div class="mc-mid"><b class="mc-when">휴식기</b><span class="mc-fmt">예정된 경기가 없습니다</span></div><div></div></section>';
+      const lu = sim.lineup(t);
+      const five = '<section class="five"><header><h3>선발 5인</h3><button class="btn sm" data-act="go" data-s="squad">스쿼드 관리</button></header><div class="five-grid">' + lu.map((p, i) => {
+        const o = L.ovr(p, i), sw = M.swingLabel(p), cond = Math.round(((p.form - 0.9) / 0.2) * 100);
+        return '<button class="pc" data-act="player" data-id="' + esc(p.id) + '"><span class="pc-role">' + L.ROLE_KO[i] + '</span><b class="pc-ovr ' + oc(o) + '">' + Math.round(o) + '</b><span class="pc-name">' + esc(p.n) + '</span><span class="pc-sw sw-' + sw.replace(/ /g, '') + '">' + sw + '</span><span class="pc-meter" title="컨디션 ' + cond + '"><i style="width:' + Math.max(4, Math.min(100, cond)) + '%"></i></span><span class="pc-line">' + (p.ss.g ? p.ss.g + '경기, 평점 ' + (p.ss.r / p.ss.g).toFixed(2) : '이번 시즌 출전 전') + '</span></button>';
+      }).join('') + '</div></section>';
+      const conf = t.conf == null ? 60 : t.conf;
+      const res = recent.map((m) => { const mine = m.a === s.user ? 0 : 1, w = m.res.s[mine] > m.res.s[1 - mine], o = s.teams[m.a === s.user ? m.b : m.a]; return '<li class="' + (w ? 'w' : 'l') + '"><b>' + (w ? '승' : '패') + '</b><span>' + tm(o) + '</span><em>' + m.res.s[mine] + ' : ' + m.res.s[1 - mine] + '</em><small>' + W.shortDate(m.day, s.year) + '</small></li>'; }).join('');
+      return hero + todos() + five + '<div class="home-grid"><section class="card"><h3>' + esc(c.name) + ' 순위</h3>' + standings(c, W.compMatches(c.id, 'reg'), c.teams) + '</section><div>' +
+        '<section class="card club-card"><h3>구단 현황</h3><p class="goal"><span>시즌 목표</span><b>' + g.text + '</b></p><div class="conf"><span>이사회 신임도</span><div class="conf-bar ' + (conf < 35 ? 'low' : conf < 60 ? 'mid' : 'hi') + '"><i style="width:' + conf + '%"></i></div><b>' + conf + '</b></div>' +
+        '<div class="kv"><span>팀 전력</span><b>' + starHtml(W.stars(t)) + ' ' + Math.round(W.teamOvr(t)) + '</b><span>팀 호흡</span><b>' + bar(sim.synergy(t) * 100) + ' ' + Math.round(sim.synergy(t) * 100) + '</b><span>감독</span><b>' + (L.staff.of(t) ? esc(L.staff.of(t).n) : '없음') + '</b><span>주간 인건비</span><b>' + money(Math.round(M.wages(t) / 48)) + '</b></div></section>' +
+        '<section class="card"><h3>최근 경기</h3>' + (res ? '<ul class="results">' + res + '</ul>' : '<p class="dim">아직 치른 경기가 없습니다.</p>') + '</section>' +
+        '<section class="card"><h3>알림 <button class="btn sm end" data-act="go" data-s="inbox">전체 보기</button></h3>' + (s.news.slice(0, 6).map((n) => '<div class="newsline ' + (n.read ? '' : 'unread') + '" data-act="go" data-s="inbox"><span class="dim">' + W.shortDate(n.day, n.year) + '</span><span>' + esc(n.title) + '</span></div>').join('') || '<p class="dim">새 알림이 없습니다.</p>') + '</section></div></div>';
     },
     inbox() {
       const s = S(); const html = s.news.slice(0, 80).map((n) => `<article class="news ${n.read ? '' : 'unread'}"><header><b>${esc(n.title)}</b><span class="dim">${W.dateStr(n.day, n.year)}</span></header><p>${esc(n.body)}</p></article>`).join('');
@@ -413,7 +426,7 @@
       <div class="kv k4"><span>나이</span><b>${s.year - p.by}세</b><span>국적</span><b>${ctry(p.c)}</b><span>소속</span><b>${tm(t)}</b><span>잠재력</span><b>${potStars(p)}</b>
         <span>연봉</span><b>${p.t ? money(p.wage) : '-'}</b><span>계약 만료</span><b>${p.t ? p.cEnd + '년' : '-'}</b><span>평가액</span><b>${money(W.value(p))}</b><span>선호 조합</span><b>${p.st.map((k) => L.STYLES[k].ko).join(', ')}</b>
         <span>명성</span><b>${bar(L.recruit.fame(p))} ${Math.round(L.recruit.fame(p))}</b><span>${p.t && !(t && t.pseudo) ? '구단 충성도' : '소속'}</span><b>${p.t && !(t && t.pseudo) ? bar(L.recruit.loy(p)) + ' ' + Math.round(L.recruit.loy(p)) : '없음'}</b>
-        <span>컨디션</span><b>${bar(((p.form - 0.9) / 0.2) * 100)}</b><span>사기</span><b>${bar(p.mor * 100)}</b><span>올 시즌</span><b>${p.ss.g}경기 ${p.ss.k}/${p.ss.d}/${p.ss.a}</b><span>평점</span><b>${p.ss.g ? (p.ss.r / p.ss.g).toFixed(2) : '-'}</b></div>
+        <span>컨디션</span><b>${bar(((p.form - 0.9) / 0.2) * 100)}</b><span>사기</span><b>${bar(p.mor * 100)}</b><span>올 시즌</span><b>${p.ss.g}경기 ${p.ss.k}/${p.ss.d}/${p.ss.a}</b><span>평점</span><b>${p.ss.g ? (p.ss.r / p.ss.g).toFixed(2) : '-'}</b><span title="시즌마다 새로 정해지는 흐름. 안정감이 낮으면 더 크게 흔들립니다.">시즌 흐름</span><b class="swing sw-${L.manage.swingLabel(p).replace(/ /g, '')}">${L.manage.swingLabel(p)}</b><span title="올해 성장 속도. 시즌마다 달라집니다.">성장 속도</span><b>${s.year - p.by > 24 ? '-' : (p.yg || 1) >= 1.5 ? '각성' : (p.yg || 1) >= 1.15 ? '빠름' : (p.yg || 1) <= 0.75 ? '정체' : '보통'}</b></div>
       <p class="skillline"><b>고유 스킬 · ${esc(L.skillOf(p)[0])}</b> <span class="sklv">${'◆'.repeat(L.skillOf(p)[2])}</span> <span class="dim">${L.skillDesc(L.skillOf(p))}</span></p><p class="oneline">${summary(p)} <span class="dim sm">· 능력치는 1~20, 항목에 마우스를 올리면 설명이 나옵니다</span></p><div class="attrs">${attr}</div><div class="acts">${act}</div>
       ${car.length ? `<h4>경력</h4>${table(['연도', '팀', '경기', '승', 'K/D/A', '평점', '종합'], car)}` : ''}</div>`;
     $('#modal').classList.add('on');

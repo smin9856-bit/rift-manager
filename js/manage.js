@@ -39,15 +39,38 @@
     const s = S(), r = R();
     for (const id in s.players) {
       const p = s.players[id], t = p.t ? s.teams[p.t] : null, age = s.year - p.by, o = L.ovr(p), gap = p.pot - o;
-      const af = age <= 18 ? 1.15 : age <= 20 ? 1 : age <= 22 ? 0.75 : age <= 24 ? 0.45 : age <= 26 ? 0.2 : 0.04;
+      const af = age <= 18 ? 1.25 : age <= 20 ? 1.1 : age <= 22 ? 0.85 : age <= 24 ? 0.5 : age <= 26 ? 0.22 : 0.04;
       let env = t ? (1 + (t.fac - 1) * 0.07 + L.staff.growMul(t, age)) * (t.lineup.includes(id) ? 1.15 : 0.85) : 0.6;
       const w = L.ROLE_W[p.r], tw = w.reduce((a, b) => a + b, 0);
       if (p.t === 'acad') env = L.youth.env();
       const pickAttr = () => { let x = r() * (tw + (p.tr >= 0 ? w[p.tr] * 3 : 0)); if (p.tr >= 0) { if (x < w[p.tr] * 3) return p.tr; x -= w[p.tr] * 3; } let k = 0; while (k < 9 && x > w[k]) { x -= w[k]; k++; } return k; };
-      for (let i = 0; i < 2; i++) {
-        if (gap > 0 && r() < af * Math.min(0.5, gap / 18) * env) { const k = pickAttr(); if (p.a[k] < 20) p.a[k]++; }
-        if (age >= 26 && r() < (age - 25) * 0.07 * (t ? L.staff.declMul(t) : 1)) { const k = r.pick([0, 1, 5, 2]); if (p.a[k] > 1) p.a[k]--; }
+      const rolls = age <= 24 ? 3 : 2, yg = p.yg || 1; // 올해 성장 운(yg): 시즌마다 다르게 뽑힘
+      for (let i = 0; i < rolls; i++) {
+        if (gap > 0 && r() < af * Math.min(0.6, gap / 14) * env * yg) { const k = pickAttr(); if (p.a[k] < 20) p.a[k]++; }
+        if (i < 2 && age >= 26 && r() < (age - 25) * 0.07 * (t ? L.staff.declMul(t) : 1)) { const k = r.pick([0, 1, 5, 2]); if (p.a[k] > 1) p.a[k]--; }
       }
+    }
+  };
+
+  // 시즌마다 바뀌는 기복: sy = 올 시즌 경기력 배율, yg = 올해 성장 속도 배율.
+  // 안정감이 낮을수록 크게 흔들리고, 주사위 성향 선수는 더 극단적이다.
+  M.SWING = [[1.06, '커리어 하이'], [1.03, '상승세'], [0.97, '보통'], [0.94, '하락세'], [0, '슬럼프']];
+  M.swingLabel = (p) => { const v = p.sy || 1; return v >= 1.045 ? '커리어 하이' : v >= 1.018 ? '상승세' : v > 0.982 ? '평범' : v > 0.955 ? '하락세' : '슬럼프'; };
+  M.seasonSwing = function (quiet) {
+    const s = S(), r = R(), mine = [];
+    for (const id in s.players) {
+      const p = s.players[id], age = s.year - p.by, stab = p.a[6] || 10, dice = (p.sk || [])[1] === 'dice';
+      const sd = (0.012 + (20 - stab) * 0.0016) * (dice ? 1.6 : 1);
+      let v = 1 + r.norm(0, sd);
+      if (r() < 0.06) v += r() < 0.5 ? 0.035 : -0.035; // 드물게 찾아오는 각성/추락
+      p.sy = Math.round(clamp(v, 0.9, 1.1) * 1000) / 1000;
+      p.yg = age <= 24 ? Math.round(clamp(1 + r.norm(0, 0.28) + (r() < 0.08 ? 0.6 : 0), 0.45, 2) * 100) / 100 : 1;
+      if (!quiet && p.t === s.user) mine.push(p);
+    }
+    if (!quiet && mine.length) {
+      const up = mine.filter((p) => p.sy >= 1.03 || p.yg >= 1.5), dn = mine.filter((p) => p.sy <= 0.97);
+      const fmt = (p) => `${p.n}(${p.yg >= 1.5 ? '성장 각성' : M.swingLabel(p)})`;
+      if (up.length || dn.length) W.news('시즌 컨디션 점검', `프리시즌 평가 결과입니다. ${up.length ? '좋은 흐름: ' + up.map(fmt).join(', ') + '. ' : ''}${dn.length ? '걱정되는 선수: ' + dn.map(fmt).join(', ') + '.' : ''}`, 'team');
     }
   };
 
@@ -291,9 +314,11 @@
       if (!W.managed(tid)) { M.ensureRoles(t); t.tactics.style = W.aiStyle(t); if (t.money < W.sponsor(t) * 0.1) t.money = Math.round(W.sponsor(t) * 0.1); }
     }
     M.aiRound(1);
+    M.seasonSwing();
     L.staff.rollover(); L.youth.rollover(); L.recruit?.rollover();
     W.setupYear();
     const ut = s.teams[s.user]; ut.goalNow = W.goal(ut); L.staff.afterRollover();
     W.news(`${s.year} 시즌 시작`, `새 시즌이 시작됩니다. 소속 리그: ${s.leagues[ut.league].name}. 이번 시즌 목표는 "${ut.goalNow.text}"입니다.${joined ? ` 올해 ${rk.length}명의 신인이 프로 무대에 등장했습니다.` : ''}`, 'board');
   };
+  const newGame = W.newGame; W.newGame = function (opt) { const r = newGame(opt); M.seasonSwing(true); return r; };
 })(typeof window !== 'undefined' ? window : globalThis);
