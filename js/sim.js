@@ -53,7 +53,7 @@
   sim.quick = function (blue, red, m, tacB, tacR, draft) {
     const D=L.competition;
     draft=draft||(D&&D.draft([blue,red],m,[tacB,tacR],m.res?.g||[],m.id));
-    const factor=(t,si,tac)=>!draft?1:D.summary(draft.picks.slice(si*5,si*5+5),tac.style).factor*sim.lineup(t).reduce((a,p,i)=>a+(.82+D.mastery(p,draft.picks[si*5+i])*.0032)*(L.champions.pool(i,S().year).includes(draft.picks[si*5+i])?1:.86),0)/5;
+    const factor=(t,si,tac)=>!draft?1:D.summary(draft.picks.slice(si*5,si*5+5),tac.style).factor*sim.lineup(t).reduce((a,p,i)=>a+(.72+D.mastery(p,draft.picks[si*5+i])*.0048)*(L.champions.pool(i,S().year).includes(draft.picks[si*5+i])?1:.86),0)/5;
     const R = W.rng(), pa = sim.power(blue, tacB, tacR)*factor(blue,0,tacB), pb = sim.power(red, tacR, tacB)*factor(red,1,tacR);
     const w = R() < 1 / (1 + Math.exp(-0.135 * (pa - pb))) ? 0 : 1, dur = 1500 + R() * 1100;
     const kw = Math.max(5, Math.round(R.norm(15, 4))), kl = clamp(Math.round(R.norm(8.5, 3.5)), 1, kw + 3), kills = w === 0 ? [kw, kl] : [kl, kw];

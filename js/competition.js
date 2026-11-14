@@ -62,7 +62,7 @@
   D.decorate=(cfg,teams,picks)=>{
     cfg.sides.forEach((side,si)=>{side.tactics={...side.tactics,ban:-1};side.composition=D.summary(picks.slice(si*5,si*5+5),side.tactics.style);side.players.forEach((p,i)=>{
       const original=L.world.get().players[p.id]||p;p.champion=picks[si*5+i];p.championMastery=D.mastery(original,p.champion);p.championFit=D.fit(p.champion,side.tactics.style);
-      p.draftFactor=(.82+p.championMastery*.0032)*(C.pool(i,cfg.year).includes(p.champion)?1:.86);
+      p.draftFactor=(.72+p.championMastery*.0048)*(C.pool(i,cfg.year).includes(p.champion)?1:.86);
     });});return cfg;
   };
   D.seriesLength=(lg,year,split)=>lg.region==='CN'||lg.region==='KR'&&year>=2015||lg.region==='NA'&&(year>=2025||year===2024&&(lg.tier===2||split==='summer'))||lg.region==='TW'&&year>=2025?3:1;

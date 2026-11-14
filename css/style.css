@@ -249,3 +249,58 @@ small.good,span.good{color:var(--good)}small.bad{color:var(--bad)}small.warn,spa
 .live:has(.winbar) .match-meta{visibility:hidden}
 .menu button{text-align:left}
 .start-art svg{opacity:.5;right:-14%;height:108%}
+.menu button{text-align:left}
+.start-art svg{opacity:.5;right:-14%;height:108%}
+
+/* 밴픽: 추천 목록 중심 */
+.draft-step h3{font-size:19px;margin:10px 0 4px}.draft-step p{margin:0 0 10px}
+.draft-confirm{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.champion-grid.compact{max-height:none;min-height:0}
+/* 신문: 작고 차분하게 */
+#featureModal .feature-box.newspaper{width:min(560px,100%);padding:26px 30px 24px;max-height:82vh;overflow:auto}
+.newspaper .paper-masthead{font-size:30px;margin:4px 0 2px}.newspaper .paper-date,.newspaper .paper-sub{font-size:11px;letter-spacing:0}
+.newspaper .paper-article{padding:12px 0}.newspaper .paper-article h2{font-size:17px;margin:4px 0 6px}.newspaper .paper-article.lead h2{font-size:22px}
+.newspaper .paper-article p{font-size:13px;line-height:1.65;margin:0}.newspaper .paper-article span{font-size:10px;letter-spacing:.04em}
+.newspaper .paper-button{margin-top:14px;padding:8px 18px;font-size:13px}
+.paperbtn{background:none;border:1px solid var(--line2);border-radius:3px;color:var(--dim);width:38px;height:38px;display:grid;place-items:center;cursor:pointer;position:relative}
+.paperbtn:hover{color:var(--acc2);border-color:var(--acc)}.paperbtn.new{color:var(--acc2);border-color:var(--acc)}
+.paperbtn.new::after{content:"";position:absolute;right:-3px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--bad)}
+
+/* 결과 화면 */
+#modal.cer-on{align-items:center;background:radial-gradient(ellipse at 50% 30%,#14222ccc,#04080cf2 70%)}
+.ceremony{width:min(820px,100%);background:var(--panel);border:1px solid var(--line2);border-radius:3px;overflow:hidden;box-shadow:0 40px 120px #000c}
+.cer-hero{position:relative;text-align:center;padding:34px 30px 26px;background:linear-gradient(180deg,color-mix(in srgb,var(--tc) 30%,#0f1a23) 0,#0f1a23 100%);border-bottom:1px solid var(--line)}
+.cer-hero.gold{background:linear-gradient(180deg,#3a3220 0,color-mix(in srgb,var(--tc) 18%,#0f1a23) 55%,#0f1a23 100%)}
+.cer-hero.muted{background:linear-gradient(180deg,#1a2530,#0f1a23)}
+.cer-hero h1{font:700 clamp(48px,7vw,78px)/1 var(--num);letter-spacing:.01em;margin:4px 0 12px}
+.cer-hero.gold h1{color:var(--acc2)}
+.cer-sub{color:var(--dim);font-size:14px;margin:0}
+.cer-trophy{width:96px;height:120px;display:block;margin:0 auto 6px;filter:drop-shadow(0 10px 30px #c9b58066)}
+.cer-final{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:18px;margin-top:16px}
+.cer-final .cer-team:first-child{justify-content:flex-end}
+.cer-score{font:700 54px/1 var(--num)}.cer-score span{color:var(--faint);margin:0 8px}
+.cer-team{display:flex;align-items:center;gap:10px;min-width:0}.cer-team b{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cer-team em{font-style:normal;font-size:11px;color:var(--dim)}
+.cer-team.me b{color:var(--acc2)}.cer-team .crest{width:36px;height:36px;font-size:12px}
+.cer-final .cer-team{flex-direction:column;gap:6px}.cer-final .cer-team .crest{width:56px;height:56px;font-size:17px}
+.cer-line{font-size:15px;margin:6px 0}.cer-line.good b,.cer-line.good{color:var(--good)}.cer-line.bad b{color:var(--bad)}
+.cer-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:20px 26px}
+.cer-grid h4{margin-top:0}
+.cer-mvp{border-left:3px solid var(--acc);padding:6px 0 6px 14px}.cer-mvp small{display:block;color:var(--dim);font-size:12px}.cer-mvp b{display:block;font:700 28px/1.1 var(--num)}.cer-mvp span{font-size:13px;color:#b9c8cf}
+.cer-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:18px;border-top:1px solid #ffffff14}
+.cer-stats div{padding:14px 6px 2px}.cer-stats b{display:block;font:700 34px/1 var(--num)}.cer-stats b span{font-size:16px;color:var(--dim);margin:0 6px 0 2px}.cer-stats small{color:var(--dim);font-size:12px}
+.cer-list{list-style:none;margin:0;padding:0}.cer-list li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:7px 0;border-bottom:1px solid #18262f}.cer-list small{grid-column:1/-1;color:var(--faint);font-size:11px}
+.cer-table{list-style:none;margin:0;padding:14px 26px 4px;columns:2;column-gap:28px}
+.cer-table li{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #18262f;break-inside:avoid}.cer-table li>span{width:20px;color:var(--faint);font-family:var(--num);font-size:16px}
+.cer-table li.cut{border-bottom-color:var(--acc)}.cer-table li.me{background:#c9b5800f}
+.cer-regions{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px 22px;padding:18px 26px 6px;max-height:44vh;overflow:auto}.cer-regions h4{margin:0 0 4px}.cer-regions .cer-team{padding:3px 0}.cer-regions .cer-team .crest{width:24px;height:24px;font-size:9px}.cer-regions .cer-team b{font-size:13px}
+.cer-actions{display:flex;justify-content:center;padding:16px 20px 22px}.cer-actions .btn{min-width:200px;padding:12px 26px;font-size:15px}
+.ceremony .cer-trophy,.ceremony h1{animation:cerIn .7s cubic-bezier(.2,.9,.3,1.2) both}.ceremony h1{animation-delay:.12s}
+@keyframes cerIn{from{transform:translateY(18px) scale(.94)}to{transform:none}}
+@media (max-width:700px){.cer-grid{grid-template-columns:1fr}.cer-stats{grid-template-columns:1fr 1fr}.cer-table{columns:1}.cer-final{grid-template-columns:1fr}.cer-final .cer-team:first-child{justify-content:center}}
+
+/* 자료실 창(분류표·뉴스·휴가)을 본 화면과 같은 톤으로 */
+#featureModal .feature-box:not(.newspaper){background:var(--panel);border:1px solid var(--line2);border-top:3px solid var(--acc);border-radius:3px;color:var(--text)}
+#featureModal .eyebrow{color:var(--acc);letter-spacing:0;font-size:12px}
+.draft-modern .draft-roster,.draft-rule{background:var(--panel);border-color:var(--line);border-radius:3px}
+.draft-slot.active{background:#c9b5801a;box-shadow:inset 3px 0 0 var(--acc)}
+.champion-tile{border-radius:3px}

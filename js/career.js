@@ -30,7 +30,7 @@
     p.n = opt.name; p.me = 1; p.gen = 0; p.h = opt.region === 'LAN' || opt.region === 'LAS' ? 'LAT' : opt.region;
     for (const k in ty.up) p.a[I[k]] = clamp(Math.round(p.a[I[k]] + ty.up[k]), 1, 20);
     for (const k in ty.down) p.a[I[k]] = clamp(Math.round(p.a[I[k]] - ty.down[k]), 1, 20);
-    p.pot = 99; p.st = L.playerStyles(p);
+    p.pot = 99; p.st = L.playerStyles(p); if (opt.skill) p.sk = opt.skill.slice();
     p.t = t.id; p.wage = Math.round(1200 * W.infl()); p.cEnd = s.year + 1; p.mor = 0.7;
     s.mode = 'player'; s.mgrs = []; s.me = p.id; s.user = t.id; s.act = 'solo'; s.cash = 0; s.poffers = []; s.news = []; s.joinY = s.year; s.force = 0; s.call = '';
     W.autoLineup(t);
@@ -60,6 +60,7 @@
     me.form = clamp(me.form + act.form, 0.9, 1.1); if (act.mor) me.mor = clamp(me.mor + act.mor, 0.05, 1);
     s.cash += Math.round(me.wage / 48) + (act.cash ? Math.round(40 * W.infl() * (1 + Math.max(0, L.ovr(me) - 60) / 12)) : 0);
     if (W.windowOpen()) C.genOffers();
+    C.checkSkillOffer(); if (s.day < 8) C.seasonSkill();
   };
   // 나를 주전으로 쓸 만한 팀들
   C.interested = function (wide) {
@@ -131,6 +132,34 @@
     if (r() > p) return { ok: 0, msg: `${t.name}이(가) 정중히 거절했습니다. 지금 ${L.ROLE_KO[me.r]} 자리에 만족하고 있습니다.` };
     C.join(t, Math.round((W.wageAsk(me) * (gap > 0 ? 1.05 : 0.8)) / 100) * 100, 2, '이적');
     return { ok: 1, msg: `${t.name} 입단 성사` };
+  };
+  // ───────── 고유 스킬 선택 ─────────
+  // 처음에 무작위 3개 중 하나를 고르고, 명성이 오를 때마다 새 후보 3개가 나온다 (명성이 높을수록 단계가 높다)
+  C.rollSkills = function (seed, lv) {
+    const keys = Object.keys(L.SKILLS).filter((k) => k !== 'spring'), r = L.rng(L.hash('sk' + seed)), out = [];
+    while (out.length < 3) { const k = keys[Math.floor(r() * keys.length)]; if (!out.some((x) => x[1] === k)) out.push([L.SKILLS[k][0], k, lv]); }
+    return out;
+  };
+  C.skillLevel = (fame) => (fame >= 80 ? 3 : fame >= 55 ? 2 : 1);
+  C.checkSkillOffer = function () {
+    const s = S(), me = C.me(), fame = L.recruit.fame(me);
+    if (s.skillNext == null) s.skillNext = 40;
+    if (s.skillPick || fame < s.skillNext) return;
+    s.skillPick = C.rollSkills(me.id + ':' + s.skillNext + ':' + s.year, C.skillLevel(fame));
+    s.skillNext = s.skillNext >= 85 ? 999 : s.skillNext + 15; s.skillYear = s.year;
+    W.news('새 고유 스킬 후보', `명성이 올라 새로운 플레이 스타일을 익힐 기회가 생겼습니다. [내 선수] 화면에서 세 가지 중 하나를 고르거나 지금 스킬을 유지할 수 있습니다.`, 'youth');
+  };
+  C.pickSkill = function (i) {
+    const s = S(), me = C.me(); if (!s.skillPick) return { ok: 0, msg: '지금은 고를 수 있는 스킬이 없습니다.' };
+    if (i >= 0 && s.skillPick[i]) { me.sk = s.skillPick[i].slice(); s.skillPick = null; return { ok: 1, msg: `고유 스킬을 ${me.sk[0]}(으)로 바꿨습니다.` }; }
+    // 유지: 지금 스킬의 단계만 명성에 맞게 올린다
+    const cur = L.skillOf(me), lv = Math.max(cur[2], C.skillLevel(L.recruit.fame(me))); me.sk = [cur[0], cur[1], lv]; s.skillPick = null;
+    return { ok: 1, msg: `지금 스킬을 유지합니다 (${'◆'.repeat(lv)}).` };
+  };
+  // 명성이 정점에 오른 뒤에는 매 시즌 한 번씩 다시 고를 수 있다
+  C.seasonSkill = function () {
+    const s = S(); if (!C.on() || s.skillPick) return; const me = C.me();
+    if (L.recruit.fame(me) >= 85 && s.skillYear !== s.year) { s.skillNext = 85; C.checkSkillOffer(); }
   };
   C.afterExpire = function () { if (C.on() && !C.me().t) C.findTeam('방출'); };
   C.season = function () { const me = C.me(); return me.ss.g ? { g: me.ss.g, w: me.ss.w, kda: `${me.ss.k}/${me.ss.d}/${me.ss.a}`, r: (me.ss.r / me.ss.g).toFixed(2) } : null; };

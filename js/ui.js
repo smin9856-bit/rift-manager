@@ -58,6 +58,7 @@
   UI.ngPlayer = function () {
     const s = S(), ng = UI.ng, Cr = L.career, regs = Object.values(s.leagues).filter((l) => l.tier === 1).sort((a, b) => b.base - a.base);
     const pc = (ng.pc = ng.pc || { name: '', role: 2, type: 'mech', region: 'KR', teamId: null });
+    if (!pc.skOpts) { pc.skOpts = Cr.rollSkills('new' + ng.seed + ':' + (pc.reroll || 0), 1); pc.sk = 0; }
     if (!s.leagues[pc.region + '2']) pc.region = regs[0].region;
     const lg = s.leagues[pc.region + (pc.tier === 1 ? '1' : '2')], teams = lg.teams.map((id) => s.teams[id]).sort((a, b) => b.rep - a.rep);
     if (!pc.teamId || !lg.teams.includes(pc.teamId)) pc.teamId = teams[teams.length - 1].id;
@@ -69,7 +70,8 @@
       <h3>플레이 성향</h3>${Object.entries(Cr.TYPES).map(([k, t]) => `<button class="stylecard ${pc.type === k ? 'sel' : ''}" data-act="pctype" data-k="${k}" style="width:100%;margin-bottom:6px"><b>${t.ko}</b><span>${t.desc}</span></button>`).join('')}</div>
       <div><h3 style="margin-top:14px">입단할 팀 <span class="dim sm">${esc(lg.name)} · 17세 신인으로 시작합니다</span></h3>
       ${teams.map((t) => { const st = s.players[t.lineup[pc.role]]; return `<button class="teamcard ${pc.teamId === t.id ? 'sel' : ''}" data-act="pcteam" data-id="${esc(t.id)}" style="width:100%;margin-bottom:6px"><i class="bar" style="background:${t.color}"></i><b>${esc(t.name)}</b>${starHtml(W.stars(t))}<span class="dim sm">주전 ${L.ROLE_KO[pc.role]}: ${st ? `${esc(st.n)} ${Math.round(L.ovr(st, pc.role))}` : '없음'} · 내 시작 능력 약 ${Math.round(lg.base - (lg.tier === 1 ? 7 : 4))}</span></button>`; }).join('')}
-      <p class="dim sm">강한 팀일수록 주전 경쟁이 치열합니다. 약한 팀에서는 바로 뛸 수 있습니다.</p></div></div>
+      <p class="dim sm">강한 팀일수록 주전 경쟁이 치열합니다. 약한 팀에서는 바로 뛸 수 있습니다.</p>
+      <h3>고유 스킬 <span class="dim sm">무작위로 나온 세 가지 중 하나</span></h3>${pc.skOpts.map((sk, i) => `<button class="stylecard ${pc.sk === i ? 'sel' : ''}" data-act="pcskill" data-i="${i}" style="width:100%;margin-bottom:6px"><b>${esc(sk[0])}</b><span>${L.skillDesc(sk)}</span></button>`).join('')}<p class="dim sm">명성이 오르면 더 강한 단계의 새 후보가 나와 다시 고를 수 있습니다.</p></div></div>
       <div class="actions"><button class="btn" data-act="ng">뒤로</button><button class="btn primary" data-act="pcstart">데뷔하기</button></div></div>`;
   };
   UI.ngCreate = function () {
@@ -154,7 +156,7 @@
       };
       return `<h2>스쿼드</h2><section class="card"><h3>선발 명단 <button class="btn sm" data-act="autolineup">자동 선발</button> <span class="${imp > 2 ? 'bad' : 'dim'}">용병 ${imp}/2명</span></h3><div class="slots">${[0, 1, 2, 3, 4].map(slot).join('')}</div>
         <p class="dim sm">자기 포지션이 아닌 자리에 세우면 능력이 약 14% 떨어집니다. 선발을 바꾸면 팀 호흡이 일시적으로 내려갑니다. 선발에 용병(외국 국적)은 2명까지 넣을 수 있습니다.</p></section>
-        <section class="card">${table(['', '이름', '고유 스킬', '나이', '국적', '종합', '잠재력', '컨디션', '사기', '경기', 'K/D/A', '평점', '연봉', '계약'], ros.map(row))}</section>`;
+        <section class="card">${pfBar()}${table(['', '이름', '고유 스킬', '나이', '국적', '종합', '잠재력', '컨디션', '사기', '경기', 'K/D/A', '평점', '연봉', '계약'], ros.filter(pfOk).map(row))}</section>`;
     },
     tactics() {
       const s = S(), t = s.teams[s.user], tac = t.tactics, lu = sim.lineup(t);
@@ -171,7 +173,7 @@
       const row = (p) => { const age = s.year - p.by, o = L.ovr(p); return `<tr><td><span class="rolechip">${L.ROLE_KO[p.r]}</span></td><td>${pl(p)}</td><td>${age}</td><td class="${oc(o)}"><b>${Math.round(o)}</b></td><td>${potStars(p)}</td><td>${age <= 20 ? '<span class="good">빠른 성장기</span>' : age <= 23 ? '성장기' : age <= 26 ? '<span class="dim">전성기</span>' : '<span class="bad">하락기</span>'}</td>
         <td><select data-chg="train" data-id="${esc(p.id)}"><option value="-1">균형 훈련</option>${L.ATTRS.map((k, i) => `<option value="${i}" ${p.tr === i ? 'selected' : ''}>${L.ATTR_KO[i]} (${p.a[i]})</option>`).join('')}</select></td></tr>`; };
       return `<h2>훈련</h2><p class="dim">선수는 매달 성장 판정을 받습니다. 어릴수록, 잠재력과의 격차가 클수록, 주전으로 뛸수록, 시설과 코치진이 좋을수록 빨리 큽니다. 집중 훈련 항목은 그 능력이 오를 확률을 높입니다.</p>
-        <section class="card">${table(['', '이름', '나이', '종합', '잠재력', '성장 단계', '집중 훈련'], ros.map(row))}</section>
+        <section class="card">${pfBar()}${table(['', '이름', '나이', '종합', '잠재력', '성장 단계', '집중 훈련'], ros.filter(pfOk).map(row))}</section>
         <section class="card"><div class="kv"><span>훈련 시설</span><b>${t.fac}단계</b><span>감독</span><b>${L.staff.of(t) ? esc(L.staff.of(t).n) + ' (육성 ' + L.staff.of(t).dev + ')' : '-'}</b><span>유스 아카데미</span><b>${t.youth}단계</b></div><p class="dim sm">시설과 코치진은 [구단] 화면에서 투자할 수 있습니다.</p></section>`;
     },
     schedule() {
@@ -287,7 +289,8 @@
       const attr = L.ATTRS.map((k, i) => `<div class="attr" title="${L.ATTR_DESC[i]}"><span>${L.ATTR_KO[i]}</span><b class="${ac(me.a[i])}">${me.a[i]}</b><i><u style="width:${me.a[i] * 5}%"></u></i></div>`).join('');
       let next = '<p class="dim">예정된 경기가 없습니다.</p>';
       if (nm) { const op = s.teams[nm.a === s.user ? nm.b : nm.a], cc = s.comps[nm.comp]; next = `<div class="nextm"><div><span class="dim">${W.shortDate(nm.day, s.year)} · ${esc(cc.name)}</span><h2>vs ${esc(op.name)}</h2>${starHtml(W.stars(op))}</div>${nm.day === s.day ? '<button class="btn primary" data-act="continue">경기장으로</button>' : `<span class="dim">${nm.day - s.day}일 뒤</span>`}</div>`; }
-      return `<div class="grid2"><section class="card"><div class="coachhead"><div><h2>${esc(me.n)} <span class="rolechip">${L.ROLE_KO[me.r]}</span></h2><span class="dim">${s.year - me.by}세 · ${tm(t)} · ${esc(lg.name)} · 연봉 ${money(me.wage)} · ${me.cEnd}년까지</span></div><div class="big ${oc(o)}">${Math.round(o)}<small>종합</small></div></div>
+      const pickHtml = s.skillPick ? `<section class="card todo"><h3>새 고유 스킬을 고를 수 있습니다 <span class="dim sm">명성 ${Math.round(L.recruit.fame(me))}</span></h3>${s.skillPick.map((x, i) => `<div class="todoitem"><span><b>${esc(x[0])}</b> ${'◆'.repeat(x[2])} <span class="dim">${L.skillDesc(x)}</span></span><button class="btn sm primary" data-act="pskill" data-i="${i}">이걸로 바꾸기</button></div>`).join('')}<div class="todoitem"><span>지금 스킬 <b>${esc(sk[0])}</b>을(를) 유지합니다. 단계는 명성에 맞게 오릅니다.</span><button class="btn sm" data-act="pskill" data-i="-1">유지</button></div></section>` : '';
+      return `${pickHtml}<div class="grid2"><section class="card"><div class="coachhead"><div><h2>${esc(me.n)} <span class="rolechip">${L.ROLE_KO[me.r]}</span></h2><span class="dim">${s.year - me.by}세 · ${tm(t)} · ${esc(lg.name)} · 연봉 ${money(me.wage)} · ${me.cEnd}년까지</span></div><div class="big ${oc(o)}">${Math.round(o)}<small>종합</small></div></div>
           <p class="skillline"><b>고유 스킬 · ${esc(sk[0])}</b> <span class="dim">${L.skillDesc(sk)}</span></p><p class="oneline">${summary(me)}</p><div class="attrs">${attr}</div>
           <div class="kv k4"><span>팀 내 입지</span><b class="${starter ? 'good' : 'bad'}">${starter ? '주전' : '후보'}</b><span>경쟁자</span><b>${rv ? `${pl(rv)} ${Math.round(L.ovr(rv))}` : '없음'}</b><span>컨디션</span><b>${bar(((me.form - 0.9) / 0.2) * 100)}</b><span>사기</span><b>${bar(me.mor * 100)}</b>
             <span>올 시즌</span><b>${ss ? `${ss.g}경기 ${ss.w}승 · ${ss.kda}` : '출전 없음'}</b><span>평균 평점</span><b>${ss ? ss.r : '-'}</b><span>이번 주 활동</span><b>${Cr.ACTS[s.act].ko}</b><span>잠재력</span><b>${potStars(me)}</b></div>
@@ -379,6 +382,9 @@
 
   const crest = (x) => `<i class="crest" style="background:${x.color}">${esc(String(x.short).slice(0, 4))}</i>`;
   const formRow = (tid) => { const s = S(), r = s.matches.filter((m) => m.res && (m.a === tid || m.b === tid)).slice(-5); return r.length ? `<div class="formrow">${r.map((m) => { const w = (m.res.s[0] > m.res.s[1]) === (m.a === tid); return `<i class="${w ? 'w' : 'l'}">${w ? '승' : '패'}</i>`; }).join('')}</div>` : ''; };
+  UI.pf = { role: -1, q: '' };
+  const pfBar = () => `<div class="filters"><input data-chg="pfq" placeholder="선수 이름" value="${esc(UI.pf.q)}">${[[-1, '전체'], ...L.ROLE_KO.map((r, i) => [i, r])].map(([v, n]) => `<button class="opt sm ${UI.pf.role === v ? 'sel' : ''}" data-act="pfrole" data-v="${v}" style="margin:0">${n}</button>`).join('')}</div>`;
+  const pfOk = (p) => (UI.pf.role < 0 || p.r === UI.pf.role) && (!UI.pf.q || p.n.toLowerCase().includes(UI.pf.q.toLowerCase()));
   const bar = (v) => `<span class="mbar"><i style="width:${Math.max(4, Math.min(100, v))}%;background:${v > 66 ? '#4fd67a' : v > 33 ? '#e6c44a' : '#f0564a'}"></i></span>`;
   const pct = (v) => (v >= 1 ? '+' : '') + Math.round((v - 1) * 100) + '%';
 
@@ -540,7 +546,10 @@
     ypromote: (d) => { const r = L.youth.promote(d.id); toast(r.msg, !r.ok); UI.render(); },
     ydrop: (d) => { L.youth.drop(d.id); UI.render(); }, goyouth: () => UI.go('youth'),
     pctype: (d) => { UI.ng.pc.name = $('#pName').value; UI.ng.pc.type = d.k; UI.ngPlayer(); }, pcteam: (d) => { UI.ng.pc.name = $('#pName').value; UI.ng.pc.teamId = d.id; UI.ngPlayer(); },
-    pcstart: () => { const pc = UI.ng.pc; pc.name = $('#pName').value.trim(); if (pc.name.length < 2) return toast('선수 이름을 2자 이상 입력하세요.', 1); W.newGame({ year: UI.ng.year, mode: 'team', teamId: pc.teamId, seed: UI.ng.seed }); L.career.start(pc); UI.main(); },
+    pcstart: () => { const pc = UI.ng.pc; pc.name = $('#pName').value.trim(); if (pc.name.length < 2) return toast('선수 이름을 2자 이상 입력하세요.', 1); W.newGame({ year: UI.ng.year, mode: 'team', teamId: pc.teamId, seed: UI.ng.seed }); L.career.start(Object.assign({}, pc, { skill: pc.skOpts[pc.sk] })); UI.main(); },
+    pcskill: (d) => { UI.ng.pc.name = $('#pName').value; UI.ng.pc.sk = Number(d.i); UI.ngPlayer(); },
+    pskill: (d) => { const r = L.career.pickSkill(Number(d.i)); toast(r.msg, !r.ok); UI.render(); },
+    pfrole: (d) => { UI.pf.role = Number(d.v); UI.render(); },
     pact: (d) => { S().act = d.k; UI.render(); }, paccept: (d) => { const r = L.career.accept(Number(d.i)); toast(r.msg, !r.ok); UI.go(r.ok ? 'home' : 'poffers'); }, pdecline: (d) => { S().poffers.splice(Number(d.i), 1); UI.render(); },
     plist: () => { const me = L.career.me(); me.list = me.list ? 0 : 1; UI.render(); },
     mpjoin: () => UI.mpJoin(), mpjoingo: () => { const c = $('#mpCode').value.trim(), n = $('#mpName').value.trim(); if (c.length < 5 || n.length < 1) return toast('방 코드 5자와 이름을 입력하세요.', 1); L.net.join(c, n); UI.mpJoin(); },
@@ -574,6 +583,7 @@
     else if (k === 'auto') { s.auto = s.auto || {}; s.auto[ds.k] = checked ? 1 : 0; }
     else if (k === 'train') s.players[ds.id].tr = Number(value);
     else if (k === 'lgsel') { UI.lgSel = value; UI.split = null; }
+    else if (k === 'pfq') UI.pf.q = value;
     else if (k === 'tfq') f.q = value; else if (k === 'tfrole') f.role = Number(value); else if (k === 'tfregion') f.region = value;
     else if (k === 'tfage') f.maxAge = Number(value); else if (k === 'tfovr') f.minOvr = Number(value); else if (k === 'tfsort') f.sort = value; else if (k === 'tffa') f.fa = checked ? 1 : 0;
     UI.render();
