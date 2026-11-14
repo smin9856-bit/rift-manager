@@ -135,3 +135,12 @@ label.chk{margin:6px 0;color:var(--text)}
 .announce.p3{box-shadow:0 0 60px rgba(255,220,120,.18)}
 @keyframes annPop{from{transform:translateX(-50%) scale(1.5);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
 .deal span b{display:inline}
+
+/* 중계 상단 바: 골드 격차와 승리 확률 */
+.winbar{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:19;display:flex;align-items:center;gap:14px;padding:7px 16px;border-radius:8px;background:rgba(6,11,17,.88);border:1px solid rgba(255,255,255,.12);pointer-events:none;white-space:nowrap}
+.wb-team{display:flex;align-items:baseline;gap:8px;font-weight:800}.wb-team b{font-size:15px}.wb-team span{font-size:20px;font-variant-numeric:tabular-nums}
+.wb-team.blue{color:#6fbcff}.wb-team.red{color:#ff7b7f}
+.wb-mid{width:230px;text-align:center}.wb-gold{font-size:13px;font-weight:700;color:#dfe8ee}.wb-gold.blue{color:#6fbcff}.wb-gold.red{color:#ff7b7f}
+.wb-bar{height:7px;border-radius:4px;background:#ff5a5f;overflow:hidden;margin:3px 0 1px}.wb-bar i{display:block;height:100%;background:#3b9eff;transition:width .4s}
+.wb-label{font-size:10px;letter-spacing:.12em;color:#8a99a8}
+.announce{top:20%}

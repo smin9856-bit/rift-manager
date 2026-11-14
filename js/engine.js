@@ -36,7 +36,7 @@
   const RIVER = [{ x: 250, y: 250 }, { x: 375, y: 375 }, { x: 500, y: 500 }, { x: 625, y: 625 }, { x: 750, y: 750 }];
   const S_STRUCT = [0.40, 0.27, 0.15, 0.10];
   const KINDS = ['t1', 't2', 't3', 'inh'];
-  const HP_STRUCT = [4400, 3400, 3000, 3200];
+  const HP_STRUCT = [3900, 3000, 2700, 2800];
   const BODY = 25, FIXED_DT = 0.05;
   const WALLS0 = [{x:230,y:640,r:30},{x:350,y:500,r:27},{x:475,y:820,r:28},{x:650,y:800,r:30}];
   const WALLS = WALLS0.concat(WALLS0.map(w=>({...mir(w),r:w.r})));
@@ -696,7 +696,7 @@
     let killer = src;
     if (!killer) { let bt = -1; for (const k in v.hitBy) if (v.hitBy[k] > bt && t - v.hitBy[k] < 12) { bt = v.hitBy[k]; killer = m.all[k]; } }
     v.d++; v.hp = 0; v.fight = null; v.path = null; v.recall = 0; v.tp = null; v.gank = null;
-    v.dead = t + Math.min(62, 7 + v.lvl * 2.4 + Math.max(0, t - 1500) / 50);
+    v.dead = t + Math.min(66, 8 + v.lvl * 2.7 + Math.max(0, t - 1300) / 40);
     const bounty = clamp(300 + v.streak * 70 - Math.max(0, v.d - v.k - 2) * 30, 120, 800);
     v.streak = 0;
     if (F) F.kills[1 - v.side]++;
@@ -866,7 +866,7 @@
       const def = ds.players.filter((p) => !p.dead && !p.fight && !p.recall && dist(p, st) < 175);
       const baron = t < as.baronUntil;
       let dmg = 14 * (baron ? 2.4 : 1) + (ds.st[l][3].hp <= 0 ? 16 : 0);
-      for (const p of atk) dmg += m.pow(p) * 0.56 * (p.role === ADC ? 1.5 : p.role === SUP ? 0.5 : 1) * (baron ? 1.4 : 1) * (as.tactics.style === 'poke' ? 1.12 : 1) * (as.tactics.style === 'split' && p.role === TOP ? 1.25 : 1);
+      for (const p of atk) dmg += m.pow(p) * 0.66 * (p.role === ADC ? 1.5 : p.role === SUP ? 0.5 : 1) * (baron ? 1.4 : 1) * (as.tactics.style === 'poke' ? 1.12 : 1) * (as.tactics.style === 'split' && p.role === TOP ? 1.25 : 1);
       if (def.length) dmg *= clamp(0.3 + 0.22 * (atk.length - def.length), 0.18, 1);
       if (t < 300) dmg *= 0.5;
       if (st.k === 't1' && t < 840 && m.era.plates) dmg *= 0.75;

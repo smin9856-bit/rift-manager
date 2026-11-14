@@ -4,7 +4,7 @@
   const V = (L.view = {});
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const BLUE = '#3b9eff', RED = '#ff5a5f';
-  const SPEEDS = [0, 3, 8, 16, 32, 90]; // 실제 1초당 게임 내 초
+  const SPEEDS = [0, 4, 10, 20, 40, 110]; // 실제 1초당 게임 내 초
   const C = L.champions, B = L.broadcast;
   let st = null; // 현재 시리즈 상태
 
@@ -105,6 +105,7 @@
     const cv = document.getElementById('mapCv');
     if (!document.getElementById('announce')) { const a = document.createElement('div'); a.id = 'announce'; a.className = 'announce'; cv.parentElement.appendChild(a); }
     st.annIdx = null;
+    if (!document.getElementById('winBar')) { const b = document.createElement('div'); b.id = 'winBar'; b.className = 'winbar'; cv.parentElement.appendChild(b); }
     st.cv = cv; st.ctx = cv.getContext('2d');
     lastTs = 0; acc = 0; sbT = 0; stopLoop();
     B.resize(st); st.resizeObserver = new ResizeObserver(()=>st && st.phase==='live' && B.resize(st));st.resizeObserver.observe(cv.parentElement);
@@ -187,11 +188,30 @@
       return `<span class="spell ${left||locked?'cooldown':''} ${casting?'casting':''}" title="${esc(s.name)}${locked?' · 미습득':left?' · '+left+'초':' · 준비됨'}"><img src="assets/spells/${s.icon}" alt="${esc(s.name)}"><b>${['Q','W','E','R'][i]}</b>${locked?'<em>−</em>':left?`<em>${left}</em>`:''}</span>`;
     }).join('');
   }
+  // 승리 확률: 골드 격차를 중심으로 타워·드래곤·바론·생존 인원을 반영한 추정치
+  function winProb(m, g) {
+    const t = m.t, a = m.sides[0], b = m.sides[1];
+    let x = ((g[0] - g[1]) / (1800 + t * 1.5)) * 1.25 + (a.towers - b.towers) * 0.14 + (a.dragons - b.dragons) * 0.1 + (a.soul ? 0.5 : 0) - (b.soul ? 0.5 : 0);
+    x += (t < a.baronUntil ? 0.6 : 0) - (t < b.baronUntil ? 0.6 : 0) + (t < a.elderUntil ? 0.8 : 0) - (t < b.elderUntil ? 0.8 : 0);
+    if (t > 1200) x += (m.alive(0).length - m.alive(1).length) * 0.12;
+    if (m.done) return m.winner === 0 ? 1 : 0;
+    return 1 / (1 + Math.exp(-x));
+  }
+  function winBar(m, g) {
+    const el = document.getElementById('winBar'); if (!el) return;
+    const p = winProb(m, g); st.wp = st.wp == null ? p : st.wp + (p - st.wp) * 0.25;
+    const bp = Math.round(st.wp * 100), d = g[0] - g[1], lead = Math.abs(d) < 50 ? '' : (d > 0 ? 'blue' : 'red');
+    el.innerHTML = `<div class="wb-team blue"><b>${esc(st.blue.short)}</b><span>${bp}%</span></div>
+      <div class="wb-mid"><div class="wb-gold ${lead}">${lead ? (d > 0 ? '◀ ' : '') + '골드 +' + (Math.abs(d) / 1000).toFixed(1) + 'k' + (d < 0 ? ' ▶' : '') : '골드 동률'}</div>
+      <div class="wb-bar"><i style="width:${bp}%"></i></div><div class="wb-label">승리 확률</div></div>
+      <div class="wb-team red"><span>${100 - bp}%</span><b>${esc(st.red.short)}</b></div>`;
+  }
   function scoreboard(m) {
     const t = m.t, g = [m.teamGold(0), m.teamGold(1)];
     const sc = document.getElementById('lvScore'); if (!sc) return;
     sc.innerHTML = `<div class="score-side blue-score"><b>${m.sides[0].kills}</b><small>${(g[0]/1000).toFixed(1)}k GOLD</small></div><div class="score-center"><small>GAME ${st.res.g.length+1}</small><span class="clock">${clock(t)}</span><small>${myScore()} : ${opScore()} SERIES</small></div><div class="score-side red-score"><b>${m.sides[1].kills}</b><small>${(g[1]/1000).toFixed(1)}k GOLD</small></div>`;
     document.getElementById('liveStatus').textContent=st.speed?(st.effectiveSpeed<SPEEDS[st.speed]?'● 교전 집중':'● LIVE'):'Ⅱ PAUSED';
+    winBar(m, g);
     document.getElementById('goldLead').textContent=`${g[0]>=g[1]?st.blue.short:st.red.short} +${(Math.abs(g[0]-g[1])/1000).toFixed(1)}k`;
     document.getElementById('objectiveTimers').innerHTML=[m.obj.dragon,t>=1200?m.obj.baron:m.obj.herald].filter(o=>o.next<1e8).map(o=>`<span class="objective ${o.alive?'alive':''}"><i>${o.type==='dragon'?'◇':'◈'}</i> ${o.type==='dragon'?(o.elder?'장로 드래곤':'드래곤'):o.type==='baron'?'바론':'협곡의 전령'} <b>${o.alive?'생존':clock(Math.max(0,o.next-t))}</b></span>`).join('')+`<span class="phase-tag">${t<840?'라인전':t<1680?'중반 운영':'후반 한타'}</span>`;
     for (let si = 0; si < 2; si++) {
