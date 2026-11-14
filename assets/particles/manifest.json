@@ -1,0 +1,739 @@
+{
+  "version": 1,
+  "archives": {
+    "Ahri": {
+      "file": "Ahri.wad.client",
+      "wadVersion": [
+        3,
+        4
+      ],
+      "size": 211082099
+    },
+    "Ashe": {
+      "file": "Ashe.wad.client",
+      "wadVersion": [
+        3,
+        4
+      ],
+      "size": 148996532
+    },
+    "Lux": {
+      "file": "Lux.wad.client",
+      "wadVersion": [
+        3,
+        4
+      ],
+      "size": 140045291
+    }
+  },
+  "resources": [
+    {
+      "path": "ASSETS/Characters/Ahri/Skins/Base/Particles/Ahri_Base_E_distort.tex",
+      "pathHash": "ad287961305637b6",
+      "archive": "Ahri.wad.client",
+      "sourceSHA256": "41241eafa700d7aa8a280bc7d943c090005324d146d33777a5b8b4bda3ab977b",
+      "bytes": 21884,
+      "output": "assets/particles/ad287961305637b6.png",
+      "outputSHA256": "600fd3f2d76d82e5727acbdf2e3a8d94aef53a2ee33259d55208a779d26d302a",
+      "width": 128,
+      "height": 128,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ahri/Skins/Base/Particles/Ahri_Base_Q_OrbBackground.tex",
+      "pathHash": "eaeed06782039d3f",
+      "archive": "Ahri.wad.client",
+      "sourceSHA256": "909eda13bd78d02b4919210a926330a2b01906199a3af4aabc5d8fde17514057",
+      "bytes": 87420,
+      "output": "assets/particles/eaeed06782039d3f.png",
+      "outputSHA256": "1df7ac04e61a347345973e6cb73ede0ae0a3b9123417b62c35efd3861a626c2e",
+      "width": 256,
+      "height": 256,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ahri/Skins/Base/Particles/Ahri_Base_Q_Trail_02.tex",
+      "pathHash": "2b6668bd55054c2a",
+      "archive": "Ahri.wad.client",
+      "sourceSHA256": "1a967d9aa194bb97896f0e22a4756ce125454ed3dba54dc05f7ce986e524c99e",
+      "bytes": 174812,
+      "output": "assets/particles/2b6668bd55054c2a.png",
+      "outputSHA256": "2651a2e5c438f954d11dc83287b3e8585410103653bfcd853ce374c9295ef8a9",
+      "width": 512,
+      "height": 256,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ahri/Skins/Base/Particles/Ahri_Base_Q_Trail_01.tex",
+      "pathHash": "43a2520d6e62b7b7",
+      "archive": "Ahri.wad.client",
+      "sourceSHA256": "86cf370e01af237d8fc16ed0830e7ab88c860c6e5bdc7b270f79784b798f8969",
+      "bytes": 174812,
+      "output": "assets/particles/43a2520d6e62b7b7.png",
+      "outputSHA256": "acb53dcbf0c41c467843cb63f56cad0acbdd39af0bfa7f805168bbe5c62a0184",
+      "width": 512,
+      "height": 256,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ahri/Skins/Base/Particles/Ahri_Base_Mote_01.tex",
+      "pathHash": "104eb5bb1d37e53f",
+      "archive": "Ahri.wad.client",
+      "sourceSHA256": "c2f6f82fe27da93501274e66be2eaec99f3922fe17a8e0ea3387424af1c57f19",
+      "bytes": 87420,
+      "output": "assets/particles/104eb5bb1d37e53f.png",
+      "outputSHA256": "295240ffe91f25116c13a8377f5138fea20baacae5a8990c83f354d51fded955",
+      "width": 256,
+      "height": 256,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ahri/Skins/Base/Particles/Ahri_Base_Q_OrbEdge_3.tex",
+      "pathHash": "217e8649f04b5e37",
+      "archive": "Ahri.wad.client",
+      "sourceSHA256": "e655c0210e58832337b7933a19b8304bd02d0e64d2f41e2195cd75e2a6be4f14",
+      "bytes": 87420,
+      "output": "assets/particles/217e8649f04b5e37.png",
+      "outputSHA256": "5108709b6761b09f301fdfcbfd721237f738b22662e203191a69edb7b35beaec",
+      "width": 256,
+      "height": 256,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ahri/Skins/Base/Particles/Ahri_Base_E_Heart_01.tex",
+      "pathHash": "a81727fc96264417",
+      "archive": "Ahri.wad.client",
+      "sourceSHA256": "1d35ed24a97bb15a0d99b75496e2d9ba1c867a4251a66a6b3dce27dccd39f11f",
+      "bytes": 87420,
+      "output": "assets/particles/a81727fc96264417.png",
+      "outputSHA256": "a2f4fe21af019da73fb7820b4fed3c07fbfc92e71a85d73d006c436d1a328c74",
+      "width": 256,
+      "height": 256,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ahri/Skins/Base/Particles/Ahri_Base_E_Heart_02.tex",
+      "pathHash": "c1bcde10c5d0b768",
+      "archive": "Ahri.wad.client",
+      "sourceSHA256": "e082573a7dffcd18575088c0f84697d66c1a64c6ff2989c2bb4bfb1fa2279b97",
+      "bytes": 87420,
+      "output": "assets/particles/c1bcde10c5d0b768.png",
+      "outputSHA256": "88beb34d42bd441db599ae751a85b5efd90729abf4fd0f104032f1c4a663e0c6",
+      "width": 256,
+      "height": 256,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ahri/Skins/Base/Particles/Ahri_Base_Heart_mesh_adjusted.tex",
+      "pathHash": "0dc13886a1528cbc",
+      "archive": "Ahri.wad.client",
+      "sourceSHA256": "4c09ecded395bdefef7f2b3200dbf753d4e6b594b72c869e92583cd83493765e",
+      "bytes": 87420,
+      "output": "assets/particles/0dc13886a1528cbc.png",
+      "outputSHA256": "f86065a7e702f32c07dc614fac119399058823bad136cd91b81bb0abac75aeee",
+      "width": 256,
+      "height": 256,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ahri/Skins/Base/Particles/Ahri_Base_E_Heart_01.scb",
+      "pathHash": "9b838f9ced3b9ae8",
+      "archive": "Ahri.wad.client",
+      "sourceSHA256": "04ca95a48820d4d8f4e54ec7e89f2ea8719b8f1a0308c5ec00c5244317f77ffe",
+      "bytes": 82472
+    },
+    {
+      "path": "ASSETS/Characters/Ahri/Skins/Base/Particles/common_bigradialhalo.tex",
+      "pathHash": "b7cf3aaa74075f2a",
+      "archive": "Ahri.wad.client",
+      "sourceSHA256": "bbb3060da9f190466c1696a2495f292a079e93e7ec075260a0202155b9972817",
+      "bytes": 10948,
+      "output": "assets/particles/b7cf3aaa74075f2a.png",
+      "outputSHA256": "6ed822c02dd265a6e48db15c5235f841630d4a1e209d747b02fb1613447b4d70",
+      "width": 128,
+      "height": 128,
+      "format": "BC1"
+    },
+    {
+      "path": "ASSETS/Characters/Ahri/Skins/Base/Particles/Ahri_Base_FireShapes_00.tex",
+      "pathHash": "9116ffdc649c370a",
+      "archive": "Ahri.wad.client",
+      "sourceSHA256": "5dced20b73cf8c005886d328428cc6a04ca9f36bc8316fc8c8b04b73e74ba3dd",
+      "bytes": 87420,
+      "output": "assets/particles/9116ffdc649c370a.png",
+      "outputSHA256": "5437b307eff532f11d4f01ecf90b11d92c54bd1613f5ba110eea3b8b049e19f9",
+      "width": 256,
+      "height": 256,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ahri/Skins/Base/Particles/Ahri_Base_Sparkle.tex",
+      "pathHash": "f445363f06c6cf4e",
+      "archive": "Ahri.wad.client",
+      "sourceSHA256": "ca942bf61c054e37fe13340057687b7b98cad8f4a6f78d1a9a9b2d0a49abed49",
+      "bytes": 10948,
+      "output": "assets/particles/f445363f06c6cf4e.png",
+      "outputSHA256": "1d521cf2a426b4f2db0e608e182f37dea187648a71300f96c28db0ef3952000a",
+      "width": 128,
+      "height": 128,
+      "format": "BC1"
+    },
+    {
+      "path": "ASSETS/Characters/Ahri/Skins/Base/Particles/common_Flare-Omnimax_purp.tex",
+      "pathHash": "e249e9693f6de3ee",
+      "archive": "Ahri.wad.client",
+      "sourceSHA256": "58ce65ec010fc4f7510414e0e9206893746c8fe0bf14e7b5188bef1d8545b056",
+      "bytes": 43716,
+      "output": "assets/particles/e249e9693f6de3ee.png",
+      "outputSHA256": "03288e30c78eb9a68a81b598690236312a3e971da9ce729283c5874d6e374fc8",
+      "width": 256,
+      "height": 256,
+      "format": "BC1"
+    },
+    {
+      "path": "ASSETS/Characters/Ashe/Skins/Base/Particles/Ashe_Base_AA_ArrowText.tex",
+      "pathHash": "0656810a5018821c",
+      "archive": "Ashe.wad.client",
+      "sourceSHA256": "b6793eb3f2868d518ab69843696e2ddf641dd933d922580cbb576cf51b7ea9be",
+      "bytes": 43716,
+      "output": "assets/particles/0656810a5018821c.png",
+      "outputSHA256": "04d44e7199469b889c5f1d2270799b58f146b082efc72df7348caabc7060783c",
+      "width": 256,
+      "height": 256,
+      "format": "BC1"
+    },
+    {
+      "path": "ASSETS/Characters/Ashe/Skins/Base/Particles/Ashe_Base_R_Arrow.scb",
+      "pathHash": "bcf82f727b333cb4",
+      "archive": "Ashe.wad.client",
+      "sourceSHA256": "006f28f358a1f275fd5eed73a01f8fff1df7e984a7af9ed6cf3f53d8568e34a1",
+      "bytes": 26608
+    },
+    {
+      "path": "ASSETS/Characters/Ashe/Skins/Base/Particles/Irelia_Skin06_shards.tex",
+      "pathHash": "8e83acae63c90ef4",
+      "archive": "Ashe.wad.client",
+      "sourceSHA256": "2f9b32f00dd84a8d49a46b6cbfa500e7776880bdc867401bfb6b394842ec5a13",
+      "bytes": 21884,
+      "output": "assets/particles/8e83acae63c90ef4.png",
+      "outputSHA256": "05a0071e79bc05fbc95ca1a1a5ab690d9ade8dda04bdb9d9709565dd908324b6",
+      "width": 128,
+      "height": 128,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ashe/Skins/Base/Particles/Ashe_Base_E_WispySmoke01.tex",
+      "pathHash": "120dbdd7c9c91878",
+      "archive": "Ashe.wad.client",
+      "sourceSHA256": "292c890bdf856e4b2333d0a43266e463e931a0e3255007ec1ff81ab0675f18f7",
+      "bytes": 87420,
+      "output": "assets/particles/120dbdd7c9c91878.png",
+      "outputSHA256": "a525db461b484088c87d20e81a564a87f24e0950cec8a187ac0e45cc67eaa348",
+      "width": 256,
+      "height": 256,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ashe/Skins/Base/Particles/Ashe_Base_BA_Glow.tex",
+      "pathHash": "5e034983fb55d578",
+      "archive": "Ashe.wad.client",
+      "sourceSHA256": "0976c09543b07b12fedbaad697c1bb82885289b48c16ba6428d5fa0ad9e54b1d",
+      "bytes": 87420,
+      "output": "assets/particles/5e034983fb55d578.png",
+      "outputSHA256": "027f3df8aff850c5cfe4e89e360f16f13fa67a1567634bcea5d7a487ef41e185",
+      "width": 256,
+      "height": 256,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ashe/Skins/Base/Particles/Ashe_Base_Q_mis_star.tex",
+      "pathHash": "ec21eebc5d3f2036",
+      "archive": "Ashe.wad.client",
+      "sourceSHA256": "c6888bb1821765bb1f9e9b5976a65e294f0becc25c73632b1e2daf7ee154b752",
+      "bytes": 5500,
+      "output": "assets/particles/ec21eebc5d3f2036.png",
+      "outputSHA256": "357ca78ce5460103e688b3f7c6bb4a1178aabac87ffcff517dd3adad5c8486ee",
+      "width": 64,
+      "height": 64,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ashe/Skins/Base/Particles/Ashe_R_Shape.tex",
+      "pathHash": "954ae6282e5dde49",
+      "archive": "Ashe.wad.client",
+      "sourceSHA256": "c1e4513fe5fac56b4d3fccabb9bb607407b573e61e87c0018510af2c35cf2749",
+      "bytes": 87420,
+      "output": "assets/particles/954ae6282e5dde49.png",
+      "outputSHA256": "41b6da56c45407c728f0d4d64f85a84adcf5c4b3875cced12b8bc80105e7b26b",
+      "width": 256,
+      "height": 256,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ashe/Skins/Base/Particles/Ashe_Base_R_Smoke_Trail.tex",
+      "pathHash": "9a0e6476db000e53",
+      "archive": "Ashe.wad.client",
+      "sourceSHA256": "1563762b9fdb99e5c79c1ff45129c1f6d3f64bb661a4cc15681c183fdb3c22e4",
+      "bytes": 87420,
+      "output": "assets/particles/9a0e6476db000e53.png",
+      "outputSHA256": "1a063a519aa55504437fae235fe334cadaa2eabbfc3289ce92b0f08e955236d5",
+      "width": 256,
+      "height": 256,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ashe/Skins/Base/Particles/common_smoke_02.tex",
+      "pathHash": "d4ea29e4ff53c7ea",
+      "archive": "Ashe.wad.client",
+      "sourceSHA256": "79ec85770faf2bd8251ff199dcd2303789880c33cb57546e341affef9bfbee2f",
+      "bytes": 21884,
+      "output": "assets/particles/d4ea29e4ff53c7ea.png",
+      "outputSHA256": "f746abd70a16484c59d0b6c015649aece3b1d884c3e4affc41577d211337242a",
+      "width": 128,
+      "height": 128,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Ashe/Skins/Base/Particles/Ashe_Base_BA_Ashe_Teal_Sparkle.tex",
+      "pathHash": "7e07366bc5900840",
+      "archive": "Ashe.wad.client",
+      "sourceSHA256": "b35d232adc6b8c2de2d34776561eb813ca980106b4135fc9a9c661f771aaa7c8",
+      "bytes": 10948,
+      "output": "assets/particles/7e07366bc5900840.png",
+      "outputSHA256": "59ee274fbf9d5437ca6a02158557f591fb428c9cfaaebf2c709018e22bbba71c",
+      "width": 128,
+      "height": 128,
+      "format": "BC1"
+    },
+    {
+      "path": "ASSETS/Characters/Ashe/Skins/Base/Particles/common_frost_cloud_01.tex",
+      "pathHash": "a98e379230557948",
+      "archive": "Ashe.wad.client",
+      "sourceSHA256": "92941a137e738c2490348f6a0b767339534352e9fe986a5e4c5dc372f27edebf",
+      "bytes": 10948,
+      "output": "assets/particles/a98e379230557948.png",
+      "outputSHA256": "2cbcb865446371796fe26dce29ac3752c76427da8f7ed1a13e8072502f585205",
+      "width": 128,
+      "height": 128,
+      "format": "BC1"
+    },
+    {
+      "path": "ASSETS/Characters/Ashe/Skins/Base/Particles/Flare-Rainbow_lightblue.tex",
+      "pathHash": "f9dbe968282753e2",
+      "archive": "Ashe.wad.client",
+      "sourceSHA256": "fa5f3ea34fff496819f2ac62474b0f172799465006e07958ea60e465d6dadb5e",
+      "bytes": 10948,
+      "output": "assets/particles/f9dbe968282753e2.png",
+      "outputSHA256": "d77577a626eeb01fcf0f5f6fbb2fbde72f4190dcdff1b429440d21a78e51ffa7",
+      "width": 128,
+      "height": 128,
+      "format": "BC1"
+    },
+    {
+      "path": "ASSETS/Characters/Lux/Skins/Base/Particles/Lux_Base_Z_Bokeh_Dots_4x4.tex",
+      "pathHash": "ba07351485b091b2",
+      "archive": "Lux.wad.client",
+      "sourceSHA256": "c7b2478580109da3a6f2367ab6bc5d5b6ba83b9b5092204cb9abdfd1c7788e4a",
+      "bytes": 10948,
+      "output": "assets/particles/ba07351485b091b2.png",
+      "outputSHA256": "b5e136b58853641bfc30f244beada7e7896fcaf942b6c83ac706d2bb13ccb2ea",
+      "width": 128,
+      "height": 128,
+      "format": "BC1"
+    },
+    {
+      "path": "ASSETS/Characters/Lux/Skins/Base/Particles/Lux_Base_Q_spark.tex",
+      "pathHash": "7fae5b0153bd6700",
+      "archive": "Lux.wad.client",
+      "sourceSHA256": "522e8bd43c9f67b920e9ddda12ed4ed40b5955e90b9a269651742477581a06f4",
+      "bytes": 21884,
+      "output": "assets/particles/7fae5b0153bd6700.png",
+      "outputSHA256": "c504dbd5fcda83fe56bb6ca32cd5ddbaf5fb3a90595b151a6a043e67ea483676",
+      "width": 128,
+      "height": 128,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Lux/Skins/Base/Particles/Lux_Q_Shape.tex",
+      "pathHash": "8ac95671205a0109",
+      "archive": "Lux.wad.client",
+      "sourceSHA256": "da01955d9268960bee538de4765ecad2d163b8e66f22d9591e534577efaa1aac",
+      "bytes": 87420,
+      "output": "assets/particles/8ac95671205a0109.png",
+      "outputSHA256": "e06a8dc5a3b0a99def73cfa4bbf07e5cbdec6318110e4e3cbd930c785f4a904b",
+      "width": 256,
+      "height": 256,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Lux/Skins/Base/Particles/Lux_Base_Q_trail.tex",
+      "pathHash": "5f3a8845f35d0662",
+      "archive": "Lux.wad.client",
+      "sourceSHA256": "c9eb0da25c83a67d041faf4a1de3bf03c7c6bd725eb50dd471097fe2ea2abd23",
+      "bytes": 21884,
+      "output": "assets/particles/5f3a8845f35d0662.png",
+      "outputSHA256": "e3a3850184289a09ddc81d25e7e2431e294329929cca91fe2a67f8c8a118fc0d",
+      "width": 128,
+      "height": 128,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Particles/starfilter.tex",
+      "pathHash": "ac71f07563eb4026",
+      "archive": "Lux.wad.client",
+      "sourceSHA256": "08afc3f877fd07d0a62cf683965fb559134b1628a2fb228bb14d6ce15676f011",
+      "bytes": 43716,
+      "output": "assets/particles/ac71f07563eb4026.png",
+      "outputSHA256": "66de4bd3d8d470fa69d4ae04050c077bc6611e3f4d54b09051e67d9e96103519",
+      "width": 256,
+      "height": 256,
+      "format": "BC1"
+    },
+    {
+      "path": "ASSETS/Characters/Lux/Skins/Base/Particles/Lux_Base_Q_Tar_Cap.tex",
+      "pathHash": "b60dceb89766cf16",
+      "archive": "Lux.wad.client",
+      "sourceSHA256": "72ce3a25f5d967ec40ec40a7c2377ce07ac9c3ef0061479049e2d265c55c85e3",
+      "bytes": 21884,
+      "output": "assets/particles/b60dceb89766cf16.png",
+      "outputSHA256": "dbce14794b38cc8ccde944f2c067f1fe55914da5299cb9280fd6fc15f99c2831",
+      "width": 128,
+      "height": 128,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Particles/RunePrison.tex",
+      "pathHash": "ceac12ade632962f",
+      "archive": "Lux.wad.client",
+      "sourceSHA256": "3b6a3654cff94f676f79bd92fd63154950fc9b0d48ad28d825c86e537fdac29b",
+      "bytes": 43716,
+      "output": "assets/particles/ceac12ade632962f.png",
+      "outputSHA256": "76939237af0a1a429ae59875d4de1dfba2e74f3f6096945051bd1815a89c6a1f",
+      "width": 256,
+      "height": 256,
+      "format": "BC1"
+    },
+    {
+      "path": "ASSETS/Characters/Lux/Skins/Base/Particles/Lux_Base_Light_sparks.tex",
+      "pathHash": "8a6b9ac508ac75d2",
+      "archive": "Lux.wad.client",
+      "sourceSHA256": "732d4b920eada150821207fbd1d0ace7dfe39d4bd8389a947634af504fb50a93",
+      "bytes": 10948,
+      "output": "assets/particles/8a6b9ac508ac75d2.png",
+      "outputSHA256": "495c9d24fd49cbbe19419a53e86fbc55cb0cc2b7901a16081a84e3dfb1a04ee0",
+      "width": 128,
+      "height": 128,
+      "format": "BC1"
+    },
+    {
+      "path": "ASSETS/Characters/Lux/Skins/Base/Particles/Lux_Base_R_LazurBeamGlow.tex",
+      "pathHash": "e51d020f52df9eb7",
+      "archive": "Lux.wad.client",
+      "sourceSHA256": "520300c167ff666ab2155ef8c1b58de77513068c6bfe08892aac584fe4b010d0",
+      "bytes": 1052,
+      "output": "assets/particles/e51d020f52df9eb7.png",
+      "outputSHA256": "7298c1fced83b3f3b9479ffc2a3f29e52b942db902733152346e012e1b2c9d47",
+      "width": 128,
+      "height": 4,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Lux/Skins/Base/Particles/Lux_Base_R_LazurBeam02.tex",
+      "pathHash": "c7fccafe44b60ebf",
+      "archive": "Lux.wad.client",
+      "sourceSHA256": "c97762bb0e3db374e8c252192cda384dc398dd7238c6ecdc758e53e0038179af",
+      "bytes": 2076,
+      "output": "assets/particles/c7fccafe44b60ebf.png",
+      "outputSHA256": "f4238605e997400da1e978998c704abddc39e74e38d4943a96fe0d42267a2bdf",
+      "width": 256,
+      "height": 4,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Lux/Skins/Base/Particles/Lux_Base_R_Heart_Beam_Glow.tex",
+      "pathHash": "4782dce836e5f324",
+      "archive": "Lux.wad.client",
+      "sourceSHA256": "53d811c49612e0b593949a3209a936412444817c4435031f1362f2d63d16f30b",
+      "bytes": 540,
+      "output": "assets/particles/4782dce836e5f324.png",
+      "outputSHA256": "d538e577d518809e6bc4e7b5be30d1c3ad70c1de85d8afcfa5e3d1112d074ba8",
+      "width": 64,
+      "height": 4,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Lux/Skins/Base/Particles/Lux_Base_R_LazurBeam01.tex",
+      "pathHash": "fe231ee80fe62e40",
+      "archive": "Lux.wad.client",
+      "sourceSHA256": "4fe41645e847bcdff6e0c3532c6854fdd05a9a7d042369214f995c91898ee973",
+      "bytes": 87420,
+      "output": "assets/particles/fe231ee80fe62e40.png",
+      "outputSHA256": "293ae4dc10239f0ae11f0e4aa3dd377b82c5ecc4cdb6b78c11539181daebf493",
+      "width": 256,
+      "height": 256,
+      "format": "BC3"
+    },
+    {
+      "path": "ASSETS/Characters/Lux/Skins/Base/Particles/Lux_Base_Z_Wisp_2.tex",
+      "pathHash": "ee06e6bbe7121718",
+      "archive": "Lux.wad.client",
+      "sourceSHA256": "c7dfdf69d11e3b49dcab373ec97efdac35b5821c6ef6b4b23166b2cde93e0426",
+      "bytes": 87452,
+      "output": "assets/particles/ee06e6bbe7121718.png",
+      "outputSHA256": "8b01a386de079b76d617c985d85ce6c0786a3b19b2b1df55b001db366c157c26",
+      "width": 128,
+      "height": 512,
+      "format": "BC3"
+    }
+  ],
+  "systems": {
+    "AhriQ": {
+      "bin": "DATA/Characters/Ahri/Ahri_Multi_Skins_Skin0_Skins_Skin2_Skins_Skin53_Skins_Skin57_Skins_Skin6.bin",
+      "binSHA256": "6d3753631c2a6dca7d54813d98a10bc3b48cf73706000672cd1feb4f42e442de",
+      "particle": "Ahri_Base_Q_mis",
+      "selected": [
+        "OverlayGlow",
+        "Inner_Light3",
+        "Inner_Darkness",
+        "Trail2",
+        "Trail3",
+        "sparkles1",
+        "PreSwap",
+        "Inner_Light5"
+      ],
+      "omitted": [
+        "GroundDarkness",
+        "Trail4",
+        "Trail7",
+        "Trail8",
+        "Indicator",
+        "Temp_Mesh3",
+        "rays2",
+        "Dissolve_SPHERE"
+      ]
+    },
+    "AhriQReturn": {
+      "bin": "DATA/Characters/Ahri/Ahri_Multi_Skins_Skin0_Skins_Skin2_Skins_Skin53_Skins_Skin57_Skins_Skin6.bin",
+      "binSHA256": "6d3753631c2a6dca7d54813d98a10bc3b48cf73706000672cd1feb4f42e442de",
+      "particle": "Ahri_Base_Q_mis_02",
+      "selected": [
+        "OverlayGlow",
+        "Inner_Light3",
+        "Trail2",
+        "sparkles_mis",
+        "Inner_Light6",
+        "Inner_Darkness4",
+        "Inner_Light7",
+        "Inner_Light8"
+      ],
+      "omitted": [
+        "Flash",
+        "GroundLight",
+        "Inner_Light1",
+        "Trail3",
+        "Trail4",
+        "Trail5",
+        "Trail6",
+        "Indicator",
+        "Temp_Mesh1",
+        "sparkles_burst",
+        "rays3",
+        "DISSOLVE_SPHEREb"
+      ]
+    },
+    "AhriE": {
+      "bin": "DATA/Characters/Ahri/Ahri_Multi_Skins_Skin0_Skins_Skin1_Skins_Skin2_Skins_Skin52_Skins_Skin53_Skins_Skin57_Skins_Skin6.bin",
+      "binSHA256": "2c7b5e95aafba111b0dac82d6c77917ab8f8c1ea3e096a1eeb492c15ac50779c",
+      "particle": "Ahri_Base_E_mis",
+      "selected": [
+        "HeartMesh_WORLD1",
+        "HeartMesh_WORLD3",
+        "AdditiveGlow",
+        "Trail6",
+        "HeartMesh_ADD1"
+      ],
+      "omitted": [
+        "GroundLight",
+        "Temp_Mesh2",
+        "DarknessBB3",
+        "Trail7",
+        "Trail8",
+        "HeartMesh_ALPHA2",
+        "Dustring4"
+      ]
+    },
+    "AhriQHit": {
+      "bin": "DATA/Characters/Ahri/Ahri_Multi_Skins_Skin0_Skins_Skin1_Skins_Skin18_Skins_Skin2_Skins_Skin5_Skins_Skin52_Skins_Skin53_Skins_Skin56_Skins_Skin57_Skins_Skin6.bin",
+      "binSHA256": "ba09e3cb33c15c79aa9249b0fcd8476019c36754aa28c87a138291dda15a8b0b",
+      "particle": "Ahri_Base_Q_tar",
+      "selected": [
+        "Flash_Rainbow",
+        "FireCards_CAST",
+        "sparks"
+      ],
+      "omitted": [
+        "darkspike",
+        "spike"
+      ]
+    },
+    "AhriEHit": {
+      "bin": "DATA/Characters/Ahri/Ahri_Multi_Skins_Skin0_Skins_Skin1_Skins_Skin18_Skins_Skin2_Skins_Skin3_Skins_Skin5_Skins_Skin52_Skins_Skin53_Skins_Skin54_Skins_Skin56_Skins_Skin57_Skins_Skin6_Skins_Skin75.bin",
+      "binSHA256": "f06125e606dae3bffa521f492900aff37f5953f7c3cd1ec129ac852ac85396b0",
+      "particle": "Ahri_Base_E_tar",
+      "selected": [
+        "Flash",
+        "Flash1",
+        "Temp_GroundGlow",
+        "sparkles_burst"
+      ],
+      "omitted": [
+        "FireCards_CAST",
+        "Dustring"
+      ]
+    },
+    "AsheR": {
+      "bin": "DATA/Characters/Ashe/Ashe_Multi_Skins_Skin0_Skins_Skin4_Skins_Skin7.bin",
+      "binSHA256": "fc9c0ac50bdf7d14f6ba43480c63fa4c3fc20c10a39c054e546cba317994c61e",
+      "particle": "Ashe_Base_R_mis",
+      "selected": [
+        "icearrow",
+        "Streaks_Follow",
+        "Smoke_Trail",
+        "Glow_Arrow",
+        "flake",
+        "Temp_GroundGlow",
+        "GoodOne",
+        "GoodOne1"
+      ],
+      "omitted": [
+        "Background_Arrow",
+        "Pop",
+        "Streaks_Follow1",
+        "Smoke_TrailLong",
+        "Glow_Shadow",
+        "Pop1",
+        "Glow_Arrow1",
+        "WindTunnel",
+        "WindTunnel1",
+        "Streaks_Follow2",
+        "Streaks_Follow3",
+        "Background_Arrow1"
+      ]
+    },
+    "AsheRHit": {
+      "bin": "DATA/Characters/Ashe/Ashe_Multi_Skins_Skin0_Skins_Skin4_Skins_Skin7.bin",
+      "binSHA256": "fc9c0ac50bdf7d14f6ba43480c63fa4c3fc20c10a39c054e546cba317994c61e",
+      "particle": "Ashe_Base_R_tar",
+      "selected": [
+        "snow_flurry",
+        "frost_smoke",
+        "ring_02",
+        "smoke",
+        "flat_top",
+        "flat_top2",
+        "flat_top3",
+        "Frozen_Ground"
+      ],
+      "omitted": []
+    },
+    "LuxQ": {
+      "bin": "DATA/Characters/Lux/Lux_Multi_Skins_Skin0_Skins_Skin1_Skins_Skin2_Skins_Skin3_Skins_Skin4.bin",
+      "binSHA256": "c2087e2b9100cc2d9f75151775679983953e95c8b389d6e111fb0eb5b72cd3a9",
+      "particle": "Lux_Base_Q_mis",
+      "selected": [
+        "hoop1",
+        "Core3",
+        "Sparks_",
+        "Temp_GroundGlow",
+        "Trail5",
+        "Trail_small"
+      ],
+      "omitted": [
+        "hoop2",
+        "END_Beam_ROTATING",
+        "END_Ground_Core",
+        "rays",
+        "Temp_GroundGlow2",
+        "Temp_GroundGlow3",
+        "Trail_small1",
+        "Trail_dark",
+        "Left",
+        "Left1"
+      ]
+    },
+    "LuxQHit": {
+      "bin": "DATA/Characters/Lux/Lux_Multi_Skins_Skin0_Skins_Skin1_Skins_Skin2_Skins_Skin3_Skins_Skin4_Skins_Skin5.bin",
+      "binSHA256": "ca21a60661167c36f6416bdb32f7b93badabab8874e0a7b46e7311579fc1e152",
+      "particle": "Lux_Base_Q_tar",
+      "selected": [
+        "blastring",
+        "orbitrunes",
+        "bars",
+        "orbitcap1",
+        "energy_Float"
+      ],
+      "omitted": [
+        "fireCircleTimer",
+        "fireCircleTimer1",
+        "Constelations",
+        "Constelations1",
+        "up_glow",
+        "up_glow1"
+      ]
+    },
+    "LuxR": {
+      "bin": "DATA/Characters/Lux/Lux_Multi_Skins_Skin0_Skins_Skin1_Skins_Skin2_Skins_Skin3_Skins_Skin4.bin",
+      "binSHA256": "c2087e2b9100cc2d9f75151775679983953e95c8b389d6e111fb0eb5b72cd3a9",
+      "particle": "Lux_Base_R_mis_beam",
+      "selected": [
+        "Beam_Core1",
+        "warning_beam_1",
+        "warning_beam_glow",
+        "Beam_Core_FLASH",
+        "Beam_Core_Glow",
+        "Beam_Core_Glow1",
+        "CHARGE_BEAM_PRETTINESS",
+        "Beam_Post_Prettiness",
+        "Beam_Post_Prettiness1"
+      ],
+      "omitted": [
+        "Beam_Core2",
+        "Burnt",
+        "RainbowGlow",
+        "Streaks_Linger",
+        "WOOSH",
+        "warning_beam_2",
+        "Bokeh",
+        "CHARGE_GROUND_STREAKS",
+        "CHARGE_GROUND_LIGHT",
+        "CHARGE_GROUND_DARK",
+        "Far_Refraction_L",
+        "Far_Refraction_R",
+        "Far_Refraction_L1",
+        "Far_Refraction_R1",
+        "CHARGE_BEAM_PRETTINESS1",
+        "CHARGE_BEAM_PRETTINESS2",
+        "WIDTH_Refraction_L",
+        "WIDTH_Refraction_R",
+        "CLOSE_Refraction_L",
+        "CLOSE_Refraction_R",
+        "Beam_Post_Prettiness2",
+        "Beam_DARK_FLASH1",
+        "warning_beam_3",
+        "CHARGE_GROUND_DIFFUSE",
+        "Burnt1",
+        "END_Ground_1",
+        "END_Ground_2",
+        "END_Beam_1",
+        "END_Beam_Core",
+        "END_Ground_3",
+        "END_Ground_Core",
+        "END_Beam_ROTATING",
+        "warning_beam_4",
+        "CHARGE_GROUND_LIGHT1",
+        "WIDTH_Refraction_L1",
+        "WIDTH_Refraction_R1"
+      ]
+    }
+  }
+}

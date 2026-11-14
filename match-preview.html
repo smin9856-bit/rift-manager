@@ -8,6 +8,7 @@
 <script src="js/abilities.js"></script><script src="js/world.js"></script><script src="js/sim.js"></script>
 <script src="js/competition.js"></script><script src="js/manage.js"></script><script src="js/staff.js"></script><script src="js/youth.js"></script><script src="js/career.js"></script><script src="js/broadcast.js"></script><script src="js/combat-vfx.js"></script><script src="js/draft.js"></script>
 <script src="js/view.js"></script>
+<script src="data/particles.js"></script><script src="js/native-vfx.js"></script>
 <script>
 // Standalone in-memory exhibition. Never loads or writes a saved career.
 const D=LFM_DATA[2026],S=LFM.world.newGame({year:2026,mode:'team',teamId:D.leagues[0].teams[0],seed:77});
@@ -15,7 +16,7 @@ const fixture=S.matches.find(m=>m.a===S.user||m.b===S.user);
 LFM.view.open(fixture,()=>location.href='index.html');
 const state=LFM.view.state();
 LFM.draftUI.ai(state,true);LFM.view.render();
-state.picks=['Gnar','LeeSin','Ahri','Jinx','Thresh','Renekton','Elise','Orianna','Ashe','Nautilus'];
+state.picks=['Gnar','LeeSin','Ahri','Jinx','Thresh','Renekton','Elise','Lux','Ashe','Nautilus'];
 document.querySelector('[data-mact="start"]').click();
 while(state.match.t<1080&&!state.match.done)state.match.step(1);
 state.speed=2;

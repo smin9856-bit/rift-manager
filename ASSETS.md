@@ -14,7 +14,9 @@ The simulation runs at fixed 20 Hz. Unit separation, walls, teleport landing, pr
 
 These are **simplified web simulation mechanics**. Damage uses the management game's player/gold/level model. These profiles reuse common behavior primitives; listing a profile does not mean every unique interaction is faithfully reproduced. Some unique mechanics share common behaviors. Transformations, clones, summons, items, mana costs, exact rank allocation and historical reworks are not fully simulated. Public spell ranges are scaled by 0.25 and bounded to 60–1600 map units. Data Dragon special ranges are not an exact runtime specification.
 
-`js/combat-vfx.js` renders distinct hearts, chains, arrows, orbs, beams, waves, zones, dash trails, shields, healing and status labels. **They are reconstructed Canvas animations, not original League client particle files.** No native Riot particle bundle is included. Public extraction endpoints were unavailable. Real icons and the handbook's official Riot reference videos should not be confused with original in-world VFX. Reference videos need internet access and show a fallback when unavailable.
+**Original client resources are now used for Ahri Q/E, Ashe R, and Lux Q/R.** `data/particles.js` contains 10 selected original VFX systems (64 emitters), with 37 decoded textures in `assets/particles/` and two original SCB meshes (Ahri's heart and Ashe's ice arrow). The resources were read from a local client installation, without modifying it. `assets/particles/manifest.json` records source paths, hashes, and selected/omitted emitters. See [the importer documentation](tools/particles/README.md) for reproduction and format sources.
+
+`js/native-vfx.js` interprets a subset of original emission, color, scale, atlas and motion data in Canvas. It uses original textures and mesh UVs, **not the full native Riot engine**. The 2D camera, reduced emitter count, capped trails, sustained missile lifetime and visual scaling are adaptations. Shader distortion, erosion, palettes, child systems and animated mesh lighting are not reproduced. These five skills therefore do not look pixel-identical to League. Other skills and failed asset loads use the reconstructed shapes in `js/combat-vfx.js`. Official reference videos remain separate from in-world VFX.
 
 The renderer is read-only. Effect toggles and playback speed do not change outcomes. Automatic combat zoom and optional 1× combat playback improve readability.
 
@@ -24,7 +26,11 @@ League of Legends artwork belongs to Riot Games. Rift Manager is not endorsed by
 
 Open `index.html`, or run `node tools/serve.mjs` and visit http://127.0.0.1:8765. `match-preview.html` starts an in-memory exhibition around 18:00 without touching career saves.
 
+`particle-preview.html` demonstrates the five original-resource skills with pause, restart and speed controls, without touching saves.
+
 - `node tools/physics_test.mjs`: body/wall collisions, swept hits, windup cancellation, respawn isolation, timestep batching.
+- `node tools/particles_test.mjs`: exported PNG checksums, mesh topology, source provenance, curve sampling and selection coverage.
+- `node tools/particles_browser_test.mjs`: original-resource rendering, read-only state, pause/repeat determinism, live match hooks and mobile layout.
 - `node tools/physics_abilities_test.mjs`: dashes, CC displacement, terrain, separation and batching.
 - `node tools/abilities_test.mjs`: charm, pulls, dashes, airborne, shields, heals, skillshot misses and return projectiles.
 - `node tools/champion_test.mjs`: 1,038 PNGs, yearly pools, effect bounds and eight deterministic visual/nonvisual match pairs.

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>원본 파티클 실험실 · Rift Manager</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#090f19;color:#e8eef7;font-family:Malgun Gothic,system-ui,sans-serif}main{max-width:1180px;margin:auto;padding:32px 22px}header{display:flex;justify-content:space-between;gap:20px;align-items:center}h1{font-size:28px;margin:10px 0}p{color:#9baec6;line-height:1.7;font-size:14px}.eyebrow{letter-spacing:.18em;font-size:11px;color:#8bdccd}a{color:#99e7dd}button{background:#17312f;border:1px solid #3a726c;color:#d3fff7;border-radius:7px;padding:10px 18px;cursor:pointer}.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:22px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}article{border:1px solid #26354a;border-radius:12px;overflow:hidden;background:#111b2b}article.wide{grid-column:1/-1}.title{display:flex;gap:12px;align-items:center;padding:16px 20px}.title img{width:42px;height:42px;border-radius:50%;border:1px solid #577085}h2{font-size:16px;margin:0 0 5px}.caption{font-size:11px;color:#91a2b9}canvas{display:block;width:100%;height:180px;background:radial-gradient(ellipse at 50% 50%,#172f3b,#0b1420)}footer{margin:18px 0;color:#96a9c2;font-size:12px;line-height:1.8}#loaded{font-size:12px;color:#88d8c8}@media(max-width:650px){.grid{grid-template-columns:1fr}h1{font-size:23px}header{align-items:flex-start;flex-direction:column}main{padding:20px 14px}}
+</style></head><body><main>
+<header><div><span class="eyebrow">RIFT MANAGER / ORIGINAL ASSET STUDY</span><h1>원본 파티클 실험실</h1><p>LoL 설치 파일에서 추출한 텍스처와 모형을 경기용 렌더러로 재생합니다.</p></div><a href="match-preview.html">실제 경기에서 보기 ↗</a></header>
+<div class="controls"><button id="pause">일시정지</button><button id="restart">처음부터</button><label>속도 <select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label><span id="loaded">원본 텍스처 불러오는 중…</span></div>
+<div class="grid" id="grid"></div>
+<footer>아리 Q/E · 애쉬 R · 럭스 Q/R에 한정한 시험 적용입니다. 원본 텍스처·모형·색상/크기 곡선을 사용하며, 3D 카메라·전용 셰이더·왜곡·일부 입자는 생략되어 LoL 화면과 완전히 같지는 않습니다. 아래 시연은 적중 장면을 반복하며 실제 경기에서는 충돌 판정에 따라 효과가 발생합니다.</footer>
+</main><script>window.LFM={};</script><script src="data/particles.js"></script><script src="js/native-vfx.js"></script><script>
+const demos=[['AhriQ','아리 · 현혹의 구슬','왕복 투사체 / 원본 구슬과 잔상','Ahri'],['AhriE','아리 · 매혹','원본 하트 모형 / 하트 입자','Ahri'],['AsheR','애쉬 · 마법의 수정화살','원본 얼음 화살 모형 / 얼음 파편','Ashe'],['LuxQ','럭스 · 빛의 속박','원본 빛의 구체 / 잔상','Lux'],['LuxR','럭스 · 최후의 섬광','원본 충전 광선 / 섬광과 잔광','Lux']];
+document.querySelector('#grid').innerHTML=demos.map(([key,name,sub,id])=>`<article class="${key==='LuxR'?'wide':''}"><div class="title"><img src="assets/champions/${id}.png" alt=""><div><h2>${name}</h2><div class="caption">${sub}</div></div></div><canvas data-key="${key}" aria-label="${name} 이펙트 시연"></canvas></article>`).join('');
+let time=0,playing=true,last=performance.now(),speed=1;
+const N=LFM.nativeVfx,canvases=[...document.querySelectorAll('canvas')];
+window.preview={get time(){return time},set time(v){time=v},get playing(){return playing},set playing(v){playing=v},draw};
+function draw(){for(const c of canvases){const w=c.clientWidth,h=180,dpr=Math.min(2,devicePixelRatio);if(c.width!==Math.round(w*dpr)){c.width=Math.round(w*dpr);c.height=h*dpr;}const ctx=c.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const key=c.dataset.key,cycle=time%3.4;ctx.strokeStyle='#7890a41a';ctx.setLineDash([3,7]);ctx.beginPath();ctx.moveTo(30,h/2);ctx.lineTo(w-30,h/2);ctx.stroke();ctx.setLineDash([]);
+  const start=60,end=w-65,dist=end-start,v=dist/1.5;ctx.strokeStyle='#54717a66';ctx.beginPath();ctx.arc(end,h/2,19,0,Math.PI*2);ctx.stroke();
+  if(key==='LuxR'){N.draw(ctx,key,{x:40,y:h/2,angle:0,age:cycle,length:w-80});}
+  else if(cycle<1.5){N.draw(ctx,key,{x:start+cycle*v,y:h/2,angle:0,age:cycle,speed:v,travel:cycle*v,sustain:true});}
+  else if(key==='AhriQ'&&cycle<3){N.draw(ctx,'AhriQReturn',{x:end-(cycle-1.5)*v,y:h/2,angle:Math.PI,age:cycle-1.5,speed:v,travel:(cycle-1.5)*v,sustain:true});}
+  if(cycle>=1.5&&key!=='LuxR')N.draw(ctx,key+'Hit',{x:end,y:h/2,age:cycle-1.5});
+}}
+document.querySelector('#pause').onclick=()=>{playing=!playing;document.querySelector('#pause').textContent=playing?'일시정지':'재생';};document.querySelector('#restart').onclick=()=>{time=0;draw();};document.querySelector('#speed').onchange=e=>speed=+e.target.value;
+N.ready.then(()=>{const s=N.stats();document.querySelector('#loaded').textContent=`원본 텍스처 ${s.loaded}/${s.total} · 모형 2종`});
+function loop(now){if(playing)time+=Math.min(.05,(now-last)/1000)*speed;last=now;draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+</script></body></html>

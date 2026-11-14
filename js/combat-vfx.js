@@ -8,7 +8,7 @@
     let basic=0,skills=0;c.save();c.lineCap='round';c.lineJoin='round';
     // Persistent areas and telegraphs share the actual collision geometry.
     for(const z of m.abilityZones||[]){const k=z.k,p=k.type==='selfzone'?z.p:z,color=C.profile(z.p.champion).color,r=k.radius||80;c.globalAlpha=.65;c.fillStyle=color+'18';c.beginPath();c.arc(p.x,p.y,r,0,TAU);c.fill();ring(c,p.x,p.y,r,color,3);if(k.shape==='storm'||k.shape==='wind'){for(let i=0;i<4;i++){const a=time*3+i*TAU/4;c.beginPath();c.arc(p.x,p.y,r*.7,a,a+.75);c.strokeStyle=color;c.lineWidth=5;c.stroke();}}if(k.shape==='fire'||k.shape==='poison'){for(let i=0;i<7;i++){const a=i*2.4,rr=r*(.25+(i%3)*.2);ring(c,p.x+Math.cos(a)*rr,p.y+Math.sin(a)*rr,8+Math.sin(time*7+i)*3,color,3);}}}
-    for(const e of m.abilityEvents||[]){if(time<e.start)continue;const k=e.k,color=C.profile(e.p.champion).color;c.globalAlpha=.4;const x=k.type.startsWith('self')?e.p.x:e.x,y=k.type.startsWith('self')?e.p.y:e.y;if(['area','zone','ballarea'].includes(k.type)){ring(c,x,y,k.radius||80,color,2);c.setLineDash([6,5]);ring(c,x,y,(k.radius||80)*L.clamp((time-e.start)/(e.at-e.start),0,1),color,2);c.setLineDash([]);}else if(['beam','missile','cone'].includes(k.type)){line(c,e.p.x,e.p.y,x,y,color,2);}}
+    for(const e of m.abilityEvents||[]){if(time<e.start)continue;if(L.nativeVfx?.telegraph(c,e,time))continue;const k=e.k,color=C.profile(e.p.champion).color;c.globalAlpha=.4;const x=k.type.startsWith('self')?e.p.x:e.x,y=k.type.startsWith('self')?e.p.y:e.y;if(['area','zone','ballarea'].includes(k.type)){ring(c,x,y,k.radius||80,color,2);c.setLineDash([6,5]);ring(c,x,y,(k.radius||80)*L.clamp((time-e.start)/(e.at-e.start),0,1),color,2);c.setLineDash([]);}else if(['beam','missile','cone'].includes(k.type)){line(c,e.p.x,e.p.y,x,y,color,2);}}
     for(const s of shots){
       const spell=s.slot>=0;if(spell?skills++>=12:basic++>=8)continue;
       const src=m.all[s.source]||s.sourceObj,target=m.all[s.target]||s.targetObj;if(!src||!target)continue;
@@ -22,6 +22,7 @@
       }
       c.globalAlpha=1;
       if(s.melee)continue;
+      if(spell&&L.nativeVfx?.projectile(c,s,x,y,time))continue;
       const dx=s.dx,dy=s.dy,tail=spell?(ult?90:56):25,r=spell?(ult?17:11):4;
       c.shadowBlur=spell?16:3;c.shadowColor=color;
       // A dark outline and bright core keep the projectile readable on both teams' terrain.
@@ -39,6 +40,7 @@
       if(spell&&s.shape==='hook'){c.setLineDash([5,5]);line(c,src.x,src.y,x,y,color+'aa',2.5);c.setLineDash([]);}
     }
     for(const e of m.fx.filter(e=>['beam','cone','area','dash','heal','shield'].includes(e.kind)&&time>=e.t&&time-e.t<.75).slice(-16)){
+      if(e.kind==='beam'&&L.nativeVfx?.beam(c,e,time))continue;
       const age=(time-e.t)/.75,color=C.profile(e.champion).color;c.globalAlpha=1-age;
       if(e.kind==='beam'){line(c,e.x,e.y,e.tx,e.ty,'#06121d',34);line(c,e.x,e.y,e.tx,e.ty,color,25*(1-age)+5);line(c,e.x,e.y,e.tx,e.ty,'#fffde8',7*(1-age));}
       else if(e.kind==='cone'){const angle=Math.atan2(e.ty-e.y,e.tx-e.x),d=Math.hypot(e.tx-e.x,e.ty-e.y);c.fillStyle=color+'44';c.beginPath();c.moveTo(e.x,e.y);c.arc(e.x,e.y,Math.max(120,d),angle-.55,angle+.55);c.closePath();c.fill();for(let i=-2;i<=2;i++){const a=angle+i*.2;line(c,e.x,e.y,e.x+Math.cos(a)*d,e.y+Math.sin(a)*d,color,3);}}
@@ -52,6 +54,7 @@
     for(const e of impacts.slice(-24)){
       const age=(time-e.t)/.55,spell=e.slot>=0,ult=e.slot===3,color=e.kind==='impact-tower'?'#ff826c':C.profile(e.champion).color;
       if(e.kind==='impact-splash')continue;
+      if(spell&&L.nativeVfx?.impact(c,e,time))continue;
       c.globalAlpha=(1-age)*(spell?.95:.55);const radius=(e.radius||(ult?90:spell?30:19))*(1-Math.pow(1-age,3));
       if(spell){c.fillStyle=color+'18';c.beginPath();c.arc(e.tx,e.ty,radius,0,TAU);c.fill();}
       ring(c,e.tx,e.ty,Math.max(4,radius),color,ult?5:spell?3:1.5);
