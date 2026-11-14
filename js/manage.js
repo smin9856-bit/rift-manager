@@ -23,12 +23,13 @@
         for (const p of W.roster(tid)) if (!t.lineup.includes(p.id)) p.mor = clamp(p.mor - (L.ovr(p) > W.teamOvr(t) - 3 ? 0.012 : 0.003), 0.05, 1); else p.mor = clamp(p.mor + (0.6 - p.mor) * 0.03, 0.05, 1);
       }
       if (W.windowOpen()) M.offersForUser();
+      L.recruit?.weekly();
     }
     L.youth.daily(); L.career.daily();
     if (d % 28 === 14) M.progress();
     if ([3, 10, 108, 122, 302, 309, 316, 323, 330].includes(d)) M.aiRound(d >= 300 ? 1 : 0.5);
     if (d === 250 && W.managed(s.user)) { const ex = W.roster(s.user).filter((p) => p.cEnd <= s.year); if (ex.length) W.news('계약 만료 예정', `올해로 계약이 끝나는 선수: ${ex.map((p) => p.n).join(', ')}. 재계약하지 않으면 스토브리그에 팀을 떠납니다.`, 'contract'); }
-    if (d === CAL.off) { if (W.managed(s.user)) M.boardReview(); W.news('스토브리그 개막', '시즌이 끝나고 이적 시장이 열렸습니다. 계약 만료 선수는 며칠 뒤 자유계약으로 풀립니다.', 'transfer'); }
+    if (d === CAL.off) { L.recruit?.settlePre(); if (W.managed(s.user)) M.boardReview(); W.news('스토브리그 개막', '시즌이 끝나고 이적 시장이 열렸습니다. 계약 만료 선수는 며칠 뒤 자유계약으로 풀립니다.', 'transfer'); }
     if (d === CAL.expire) M.expire();
     if (d === 104) W.news('시즌 중 이적 시장 개막', '서머 시즌 개막 전까지 선수 영입과 방출이 가능합니다.', 'transfer');
   };
@@ -124,8 +125,9 @@
   };
   M.renew = function (pid, years) {
     const s = S(), p = s.players[pid], t = s.teams[s.user], dm = M.demand(p, t);
-    if (dm == null || (p.mor < 0.3 && R()() < 0.6)) return { ok: 0, msg: `${p.n}이(가) 재계약을 거부했습니다.` };
-    const w = Math.max(p.wage, Math.round(dm * 1.05 / 100) * 100);
+    if (dm == null || (p.mor < 0.3 && R()() < 0.6) || L.recruit?.renewRefuse(p)) return { ok: 0, msg: `${p.n}이(가) 재계약을 거부했습니다.${p.pre ? ' 이미 다른 팀으로 마음이 떠났습니다.' : ' 구단에 대한 애착이 낮습니다.'}` };
+    const w = Math.max(Math.round(p.wage * 0.9 / 100) * 100, Math.round(dm * (L.recruit ? L.recruit.renewMul(p) : 1.05) / 100) * 100);
+    if (L.recruit) p.loy = clamp(L.recruit.loy(p) + 10, 0, 100);
     p.wage = w; p.cEnd = s.year + years; p.mor = clamp(p.mor + 0.1, 0, 1);
     return { ok: 1, msg: `${p.n} 재계약 완료 (연봉 ${L.fmtMoney(w)}, ${p.cEnd}년까지)` };
   };
@@ -174,7 +176,7 @@
       if (!done && r() < 0.3 * intensity && t.money > 0) {
         const [cur, role] = roles[0];
         const cands = Object.values(s.players).filter((p) => p.t && p.t !== tid && p.r === role && L.ovr(p) > cur + 3 && s.teams[p.t].rep < t.rep - 1.5 && (!W.isImport(p, t) || impN < 2));
-        const c = cands.sort((a, b) => L.ovr(b) - L.ovr(a)).find((p) => W.value(p) * 1.15 <= t.money * 0.7);
+        const c = cands.sort((a, b) => L.ovr(b) - L.ovr(a)).find((p) => W.value(p) * 1.15 <= t.money * 0.7 && !p.me && !(L.recruit && L.recruit.loy(p) > 70 && r() < 0.6));
         if (c) {
           const fee = Math.round(W.value(c) * 1.15 / 100) * 100;
           if (c.me) { /* 내 선수는 본인이 결정한다 */ } else if (c.t === s.user && W.managed(c.t)) { M.addOffer(c, t, fee); } else if (W.managed(c.t)) { /* 다른 사람이 운영하는 팀의 선수는 건드리지 않는다 */ }
@@ -289,7 +291,7 @@
       if (!W.managed(tid)) { M.ensureRoles(t); t.tactics.style = W.aiStyle(t); if (t.money < W.sponsor(t) * 0.1) t.money = Math.round(W.sponsor(t) * 0.1); }
     }
     M.aiRound(1);
-    L.staff.rollover(); L.youth.rollover();
+    L.staff.rollover(); L.youth.rollover(); L.recruit?.rollover();
     W.setupYear();
     const ut = s.teams[s.user]; ut.goalNow = W.goal(ut); L.staff.afterRollover();
     W.news(`${s.year} 시즌 시작`, `새 시즌이 시작됩니다. 소속 리그: ${s.leagues[ut.league].name}. 이번 시즌 목표는 "${ut.goalNow.text}"입니다.${joined ? ` 올해 ${rk.length}명의 신인이 프로 무대에 등장했습니다.` : ''}`, 'board');

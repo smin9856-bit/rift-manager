@@ -59,15 +59,16 @@
     const s = S(), ng = UI.ng, Cr = L.career, regs = Object.values(s.leagues).filter((l) => l.tier === 1).sort((a, b) => b.base - a.base);
     const pc = (ng.pc = ng.pc || { name: '', role: 2, type: 'mech', region: 'KR', teamId: null });
     if (!s.leagues[pc.region + '2']) pc.region = regs[0].region;
-    const lg = s.leagues[pc.region + '2'], teams = lg.teams.map((id) => s.teams[id]).sort((a, b) => b.rep - a.rep);
+    const lg = s.leagues[pc.region + (pc.tier === 1 ? '1' : '2')], teams = lg.teams.map((id) => s.teams[id]).sort((a, b) => b.rep - a.rep);
     if (!pc.teamId || !lg.teams.includes(pc.teamId)) pc.teamId = teams[teams.length - 1].id;
     $('#app').innerHTML = `<div class="wizard wide"><h1>${ng.year} 시즌 · 선수 만들기</h1>
       <div class="grid2"><div><label>선수 이름 (게임 아이디)<input id="pName" maxlength="14" value="${esc(pc.name)}" placeholder="예: Phoenix"></label>
       <label>포지션<select data-chg="pcrole">${L.ROLE_KO.map((r, i) => `<option value="${i}" ${pc.role === i ? 'selected' : ''}>${r}</option>`).join('')}</select></label>
       <label>데뷔 지역<select data-chg="pcregion">${regs.map((l) => `<option value="${l.region}" ${pc.region === l.region ? 'selected' : ''}>${W.regionName(l.region)} — ${esc(s.leagues[l.region + '2'].name)}에서 데뷔</option>`).join('')}</select></label>
+      <label>시작 리그<select data-chg="pctier"><option value="2" ${pc.tier === 1 ? '' : 'selected'}>2부 리그 — 바로 주전으로 뛰기 쉽습니다</option><option value="1" ${pc.tier === 1 ? 'selected' : ''}>1부 리그 — 처음엔 벤치일 가능성이 높습니다</option></select></label>
       <h3>플레이 성향</h3>${Object.entries(Cr.TYPES).map(([k, t]) => `<button class="stylecard ${pc.type === k ? 'sel' : ''}" data-act="pctype" data-k="${k}" style="width:100%;margin-bottom:6px"><b>${t.ko}</b><span>${t.desc}</span></button>`).join('')}</div>
       <div><h3 style="margin-top:14px">입단할 팀 <span class="dim sm">${esc(lg.name)} · 17세 신인으로 시작합니다</span></h3>
-      ${teams.map((t) => { const st = s.players[t.lineup[pc.role]]; return `<button class="teamcard ${pc.teamId === t.id ? 'sel' : ''}" data-act="pcteam" data-id="${esc(t.id)}" style="width:100%;margin-bottom:6px"><i class="bar" style="background:${t.color}"></i><b>${esc(t.name)}</b>${starHtml(W.stars(t))}<span class="dim sm">주전 ${L.ROLE_KO[pc.role]}: ${st ? `${esc(st.n)} ${Math.round(L.ovr(st, pc.role))}` : '없음'} · 내 시작 능력 약 ${Math.round(lg.base - 4)}</span></button>`; }).join('')}
+      ${teams.map((t) => { const st = s.players[t.lineup[pc.role]]; return `<button class="teamcard ${pc.teamId === t.id ? 'sel' : ''}" data-act="pcteam" data-id="${esc(t.id)}" style="width:100%;margin-bottom:6px"><i class="bar" style="background:${t.color}"></i><b>${esc(t.name)}</b>${starHtml(W.stars(t))}<span class="dim sm">주전 ${L.ROLE_KO[pc.role]}: ${st ? `${esc(st.n)} ${Math.round(L.ovr(st, pc.role))}` : '없음'} · 내 시작 능력 약 ${Math.round(lg.base - (lg.tier === 1 ? 7 : 4))}</span></button>`; }).join('')}
       <p class="dim sm">강한 팀일수록 주전 경쟁이 치열합니다. 약한 팀에서는 바로 뛸 수 있습니다.</p></div></div>
       <div class="actions"><button class="btn" data-act="ng">뒤로</button><button class="btn primary" data-act="pcstart">데뷔하기</button></div></div>`;
   };
@@ -222,6 +223,7 @@
         <div class="banner ${open ? 'open' : ''}"><b>${open ? '이적 시장이 열려 있습니다' : '지금은 이적 시장이 닫혀 있습니다'}</b><span>${open ? '다른 팀 선수도 이적료를 내고 데려올 수 있습니다.' : '소속팀이 없는 자유계약 선수만 영입할 수 있습니다. 다른 팀 선수는 시즌이 끝난 뒤(11~1월)나 스프링·서머 사이(5월)에 영입할 수 있습니다.'}</span>
           <span>쓸 수 있는 자금 <b>${money(t.money)}</b> · 로스터 <b>${W.roster(t.id).length}/10명</b></span></div>
         ${offers ? `<section class="card"><h3>우리 선수를 사겠다는 제안</h3>${offers}</section>` : ''}
+        ${(s.approach || []).length ? `<section class="card"><h3>우리 팀에 오고 싶어 하는 선수</h3>${s.approach.map((a, i) => { const p = s.players[a.pid]; return p ? `<div class="reco"><div><b>${pl(p)}</b> <span class="dim">${L.ROLE_KO[p.r]}, ${s.year - p.by}세</span> <span class="${oc(L.ovr(p))}"><b>${Math.round(L.ovr(p))}</b></span><br><span>희망 연봉 <b>${money(a.wage)}</b> <span class="dim">(시세 ${money(W.wageAsk(p))})</span></span></div><div><button class="btn sm primary" data-act="approachok" data-i="${i}">받아들이기</button> <button class="btn sm" data-act="approachno" data-i="${i}">거절</button></div></div>` : ''; }).join('')}</section>` : ''}
         <section class="card"><h3>추천 영입 <span class="dim sm">주전보다 능력이 높고, 지금 자금으로 데려올 수 있는 선수만 보여줍니다</span></h3><div class="recogrid">${recoHtml}</div></section>
         <details class="card" ${UI.tfOpen ? 'open' : ''} data-toggle="tf"><summary><b>직접 찾아보기</b> <span class="dim sm">이름·포지션·나이로 전체 선수 검색</span></summary>
           <div class="filters"><input data-chg="tfq" placeholder="선수 이름" value="${esc(f.q)}">
@@ -243,7 +245,7 @@
       const abs = s.year * 336 + s.day;
       const seen = (p) => { const v = p.potSeen || p.pot; return starHtml(v >= 92 ? 5 : v >= 86 ? 4.5 : v >= 81 ? 4 : v >= 76 ? 3.5 : v >= 71 ? 3 : v >= 66 ? 2.5 : v >= 60 ? 2 : 1.5); };
       const tiers = Y.TIERS.map((x) => `<div class="deal"><div><b>${x.name}</b><span class="dim">${x.desc}</span><span>비용 <b>${money(Y.cost(x))}</b> · ${x.days}일 · 후보 ${x.n}명</span></div><button class="btn sm primary" data-act="scout" data-k="${x.k}" ${sc ? 'disabled' : ''}>보내기</button></div>`).join('');
-      const prow = (p, btns) => `<tr><td><span class="rolechip">${L.ROLE_KO[p.r]}</span></td><td>${pl(p)}</td><td>${s.year - p.by}</td><td>${ctry(p.c)}</td><td class="${oc(L.ovr(p))}"><b>${Math.round(L.ovr(p))}</b></td><td>${seen(p)}</td><td class="dim sm">${summary(p)}</td><td>${btns}</td></tr>`;
+      const prow = (p, btns) => `<tr><td><span class="rolechip">${L.ROLE_KO[p.r]}</span></td><td>${pl(p)}${p.real ? `<small class="tagc imp" title="원래 역사에서는 ${p.debut}년에 ${p.dest && s.teams[p.dest] ? esc(s.teams[p.dest].name) : '프로 팀'}에서 데뷔합니다. 먼저 데려오지 않으면 그해에 그 팀으로 갑니다.">${p.debut}년 데뷔 예정</small>` : ''}</td><td>${s.year - p.by}</td><td>${ctry(p.c)}</td><td class="${oc(L.ovr(p))}"><b>${Math.round(L.ovr(p))}</b></td><td>${seen(p)}</td><td class="dim sm">${summary(p)}</td><td>${btns}</td></tr>`;
       return `<h2>유스</h2><p class="dim">스카우트를 보내 세상에 알려지지 않은 유망주를 찾고, 아카데미에서 키운 뒤 1군으로 올립니다. 아카데미 선수는 1군 로스터에 포함되지 않고 1군 후보보다 빨리 성장합니다. 예상 잠재력은 스카우트의 추정치라 실제와 다를 수 있으며, 유스 아카데미 등급(현재 ${t.youth}단계)이 높을수록 정확해지고 좋은 재능이 더 자주 나옵니다.</p>
         <div class="grid2"><section class="card"><h3>유스 발굴</h3>
           ${sc ? `<div class="banner open"><b>스카우트 활동 중</b><span>${W.regionName(sc.region)} · ${Y.TIERS.find((x) => x.k === sc.k).name} · ${Math.max(0, sc.until - abs)}일 뒤 보고</span></div>` : `<label class="chk">발굴 지역 <select id="scoutRegion">${Y.regions().map((l) => `<option value="${l.region}" ${l.region === t.region ? 'selected' : ''}>${W.regionName(l.region)}${l.region !== t.region ? ' (우리 팀에선 용병)' : ''}</option>`).join('')}</select></label>`}
@@ -310,6 +312,8 @@
       const rows = s.poffers.map((o, i) => { const t = s.teams[o.tid], st = s.players[t.lineup[me.r]]; return `<div class="reco"><div><b>${tm(t)}</b> ${starHtml(W.stars(t))} <span class="dim">${esc(s.leagues[t.league].name)}</span><br><span>연봉 <b>${money(o.wage)}</b> · ${o.years}년 계약 <span class="dim">(현재 ${money(me.wage)})</span></span><br><span class="dim sm">그 팀의 현재 ${L.ROLE_KO[me.r]}: ${st ? `${esc(st.n)} ${Math.round(L.ovr(st))}` : '없음'} — 내 종합 ${Math.round(L.ovr(me))}</span></div><div><button class="btn sm primary" data-act="paccept" data-i="${i}" ${open ? '' : 'disabled'}>이적</button> <button class="btn sm" data-act="pdecline" data-i="${i}">거절</button></div></div>`; }).join('');
       return `<h2>이적 제안</h2><div class="banner ${open ? 'open' : ''}"><b>${open ? '이적 시장이 열려 있습니다' : '지금은 이적 시장이 닫혀 있습니다'}</b><span>${open ? '제안을 수락하면 바로 팀을 옮깁니다.' : '제안은 시즌이 끝난 뒤(11~1월)와 스프링·서머 사이(5월)에 들어옵니다.'}</span><span>내 자산 <b>${money(s.cash)}</b></span></div>
         <section class="card"><h3>받은 제안</h3>${rows || '<p class="dim">지금은 제안이 없습니다. 좋은 평점을 쌓고 능력치를 올리면 더 큰 팀이 찾아옵니다.</p>'}</section>
+        <section class="card"><h3>원하는 팀에 직접 타진</h3><div class="filters"><select id="pApproach"><option value="">팀 선택</option>${Object.values(s.leagues).sort((a, b) => a.tier - b.tier || b.base - a.base).map((lg) => `<optgroup label="${esc(lg.name)}">${lg.teams.filter((id) => id !== s.user).map((id) => `<option value="${esc(id)}">${esc(s.teams[id].name)} (${Math.round(W.teamOvr(s.teams[id]))})</option>`).join('')}</optgroup>`).join('')}</select><button class="btn sm primary" data-act="papproach" ${open ? '' : 'disabled'}>입단 타진</button></div><p class="dim sm">내 실력이 그 팀 주전보다 좋고 명성이 높을수록 받아 줍니다. 같은 팀에는 4주에 한 번만 타진할 수 있습니다.</p></section>
+        <section class="card"><h3>팀 내 영향력 <span class="dim sm">${Cr.influence()} / 100</span></h3><div class="upg"><div><b>선발 출전 요구</b><span class="dim">영향력 55 이상. 감독이 나를 벤치에 두더라도 내가 선발로 나갑니다.</span></div><button class="btn sm ${s.force ? 'primary' : ''}" data-act="pforce">${s.force ? '요구 중 (끄기)' : '요구하기'}</button></div><div class="upg"><div><b>팀 전술에 입김 넣기</b><span class="dim">영향력 70 이상. 팀이 내가 원하는 조합 위주로 경기합니다.</span></div><div>${L.STYLE_KEYS.map((k) => `<button class="opt sm ${s.call === k ? 'sel' : ''}" data-act="pcall" data-k="${k}">${L.STYLES[k].ko}</button>`).join('')}<button class="opt sm ${s.call ? '' : 'sel'}" data-act="pcall" data-k="">감독에게 맡김</button></div></div><p class="dim sm">영향력은 명성, 팀 평균보다 높은 실력, 팀에서 보낸 시간으로 쌓입니다. 45 아래로 떨어지면 감독이 다시 결정권을 가져갑니다.</p></section>
         <section class="card"><div class="upg"><div><b>이적 요청</b><span class="dim">팀에 이적을 요청합니다. 주전이 아니어도 나를 쓰려는 팀들의 제안이 더 많이 들어옵니다.</span></div><button class="btn sm" data-act="plist">${me.list ? '요청 취소' : '이적 요청하기'}</button></div></section>`;
     },
     mp() {
@@ -348,7 +352,7 @@
     const s = S(), t = s.teams[s.user];
     return `<div class="reco"><div><b>${pl(p)}</b> <span class="${oc(L.ovr(p))}"><b>${Math.round(L.ovr(p))}</b></span> <span class="good sm">주전보다 +${Math.round(diff)}</span>${W.isImport(p, t) ? '<small class="tagc imp">용병</small>' : ''}<br>
       <span class="dim sm">${s.year - p.by}세 · ${p.t ? esc(s.teams[p.t].name) : '자유계약'} · 잠재력 ${potStars(p)}</span><br><span class="sm">${costText(c)}</span></div>
-      <button class="btn sm primary" data-act="buy" data-id="${esc(p.id)}">영입</button></div>`;
+      <div class="c"><button class="btn sm primary" data-act="player" data-id="${esc(p.id)}">제안하기</button><br><small class="${L.recruit.label(L.recruit.chance(p, t, 1).p)[1]}">수락 가능성 ${L.recruit.label(L.recruit.chance(p, t, 1).p)[0]}</small></div></div>`;
   };
   const summary = (p) => { // 한 줄 평
     const idx = p.a.map((v, i) => [v, i]).filter(([, i]) => !(p.r !== 4 && p.r !== 1 && i === 4)).sort((a, b) => b[0] - a[0]);
@@ -389,14 +393,20 @@
       <button class="btn sm" data-act="list" data-id="${esc(id)}">${p.list ? '판매 등록 취소' : '판매 등록'}</button><button class="btn sm danger" data-act="release" data-id="${esc(id)}">방출</button>`;
     else if (p.t === 'acad') act = `<button class="btn sm primary" data-act="ypromote" data-id="${esc(id)}">1군 승격</button>`;
     else if (p.t === 'scout') act = `<button class="btn sm primary" data-act="ysign" data-id="${esc(id)}">아카데미 입단</button>`;
-    else if (!p.t) { const dm = M.demand(p, ut); act = dm == null ? '<span class="bad">이 선수는 우리 팀의 제안에 관심이 없습니다 (팀 명성 부족).</span>' : `<span class="dim">요구 연봉 ${money(dm)} · 계약금 ${money(Math.round(dm * 0.15))}</span> <button class="btn sm primary" data-act="sign" data-id="${esc(id)}" data-y="1">1년 계약</button><button class="btn sm primary" data-act="sign" data-id="${esc(id)}" data-y="2">2년 계약</button><button class="btn sm primary" data-act="sign" data-id="${esc(id)}" data-y="3">3년 계약</button>`; }
-    else { const c = M.cost(p); act = `<span>${costText(c)}</span> ${c.ok ? `<button class="btn sm primary" data-act="buy" data-id="${esc(id)}">영입하기 (2년 계약)</button>` : `<span class="bad">${c.why}</span>`}`; }
+    else {
+      const Rc = L.recruit, fr = Rc.friends(p, ut), ask = W.wageAsk(p), fee = p.t ? M.askFee(p, ut) : null;
+      const info = `<p class="dim sm" style="width:100%;margin:0">이 선수가 기대하는 팀 명성 <b class="${ut.rep >= Rc.expect(p) ? 'good' : 'bad'}">${Math.round(Rc.expect(p))}</b> (우리 팀 ${Math.round(ut.rep)}), 우리 팀과의 인맥 <b>${Rc.bond(p, ut).toFixed(1)}</b>${fr.length ? ` (옛 동료 ${esc(fr.slice(0, 3).join(', '))})` : ''}${fee != null ? `, 구단이 요구하는 이적료 <b>${money(fee)}</b>` : ''}</p>`;
+      if (p.pre && p.pre.tid === ut.id) act = info + '<span class="good">시즌이 끝나면 우리 팀에 합류하기로 합의했습니다.</span>';
+      else if (p.t && !W.windowOpen()) { const tc = Rc.label(Rc.tamperChance(p, ut)); act = info + `<button class="btn sm primary" data-act="tamper" data-id="${esc(id)}">사전 접촉 (템퍼링)</button> <span class="${tc[1]}">성공 가능성 ${tc[0]}</span><p class="dim sm" style="width:100%;margin:0">이적 시장이 닫힌 동안에는 몰래 접촉해 시즌 뒤 이적을 약속받을 수 있습니다. 충성도가 낮은 선수일수록 잘 넘어옵니다. 들키면 벌금과 명성 하락이 따릅니다.</p>`; }
+      else act = info + [1, 1.2, 1.5].map((mul) => { const lb = Rc.label(Rc.chance(p, ut, mul).p); return `<button class="btn sm ${mul === 1 ? 'primary' : ''}" data-act="propose" data-id="${esc(id)}" data-m="${mul}">연봉 ${money(Math.round(ask * mul / 100) * 100)} 제안<small class="${lb[1]}">수락 가능성 ${lb[0]}</small></button>`; }).join('') + '<span class="dim sm">2년 계약 기준</span>';
+    }
     const car = p.car.slice().reverse().map((c) => `<tr><td>${c.y}</td><td>${esc(c.t)}</td><td>${c.g}</td><td>${c.w}</td><td>${c.k}/${c.d}/${c.a}</td><td>${c.r}</td><td>${c.o}</td></tr>`);
     $('#modal').innerHTML = `<div class="mbox"><button class="x" data-act="close">✕</button>
       <header><div><h2>${esc(p.n)} <span class="rolechip">${L.ROLE_KO[p.r]}</span></h2><span class="dim">${esc(p.nn || '')} ${esc(p.rn || '')}${p.gen ? ' (가상 선수)' : ''}</span></div>
         <div class="big ${oc(o)}">${Math.round(o)}<small>종합</small></div></header>
       <div class="kv k4"><span>나이</span><b>${s.year - p.by}세</b><span>국적</span><b>${ctry(p.c)}</b><span>소속</span><b>${tm(t)}</b><span>잠재력</span><b>${potStars(p)}</b>
         <span>연봉</span><b>${p.t ? money(p.wage) : '-'}</b><span>계약 만료</span><b>${p.t ? p.cEnd + '년' : '-'}</b><span>평가액</span><b>${money(W.value(p))}</b><span>선호 조합</span><b>${p.st.map((k) => L.STYLES[k].ko).join(', ')}</b>
+        <span>명성</span><b>${bar(L.recruit.fame(p))} ${Math.round(L.recruit.fame(p))}</b><span>${p.t && !(t && t.pseudo) ? '구단 충성도' : '소속'}</span><b>${p.t && !(t && t.pseudo) ? bar(L.recruit.loy(p)) + ' ' + Math.round(L.recruit.loy(p)) : '없음'}</b>
         <span>컨디션</span><b>${bar(((p.form - 0.9) / 0.2) * 100)}</b><span>사기</span><b>${bar(p.mor * 100)}</b><span>올 시즌</span><b>${p.ss.g}경기 ${p.ss.k}/${p.ss.d}/${p.ss.a}</b><span>평점</span><b>${p.ss.g ? (p.ss.r / p.ss.g).toFixed(2) : '-'}</b></div>
       <p class="skillline"><b>고유 스킬 · ${esc(L.skillOf(p)[0])}</b> <span class="sklv">${'◆'.repeat(L.skillOf(p)[2])}</span> <span class="dim">${L.skillDesc(L.skillOf(p))}</span></p><p class="oneline">${summary(p)} <span class="dim sm">· 능력치는 1~20, 항목에 마우스를 올리면 설명이 나옵니다</span></p><div class="attrs">${attr}</div><div class="acts">${act}</div>
       ${car.length ? `<h4>경력</h4>${table(['연도', '팀', '경기', '승', 'K/D/A', '평점', '종합'], car)}` : ''}</div>`;
@@ -419,7 +429,7 @@
   UI.openMatch = function (m) {
     const s = S(), t = s.teams[s.user]; sim.lineup(t);
     if (s.mode === 'player') {
-      W.autoLineup(t);
+      W.autoLineup(t); L.career.applyForce(t);
       if (!t.lineup.includes(s.me)) { sim.playSeries(m, false); const mine = m.a === s.user ? 0 : 1, won = m.res.s[mine] > m.res.s[1 - mine]; toast(`벤치에서 지켜봤습니다. 팀은 ${won ? '이겼습니다' : '졌습니다'} (${m.res.s[mine]}:${m.res.s[1 - mine]}).`); W.advance(); UI.go('home'); return; }
       V.open(m, async () => { busy = true; W.advance(); busy = false; try { W.save(0); } catch (e) { /* 무시 */ } UI.go('home'); }); return;
     }
@@ -460,7 +470,7 @@
     if (s.day % 7 === 0) { try { W.save(0); } catch (e) { /* 무시 */ } }
     if (pkg) UI.mpReplay(pkg); else UI.go(s.news[0] && s.news[0].id !== last ? 'inbox' : 'home');
   };
-  const REMOTE_ACTS = new Set(['autolineup', 'tac', 'sign', 'renew', 'release', 'list', 'buy', 'offerok', 'offerno', 'upgrade', 'hirecoach', 'deal', 'fanevent', 'renewall']);
+  const REMOTE_ACTS = new Set(['autolineup', 'tac', 'sign', 'renew', 'release', 'list', 'buy', 'propose', 'tamper', 'approachok', 'offerok', 'offerno', 'upgrade', 'hirecoach', 'deal', 'fanevent', 'renewall']);
   const REMOTE_CHG = new Set(['lineup', 'train', 'content']);
   const HOST_ONLY = new Set(['scout', 'ysign', 'ypromote', 'ydrop', 'save', 'mphost']);
   // 참가자의 조작을 방장에게 보낸다. 처리했으면 true.
@@ -516,7 +526,11 @@
     release: (d) => { const r = M.release(d.id); toast(r.msg, !r.ok); closeModal(); UI.render(); },
     list: (d) => { const p = S().players[d.id]; p.list = p.list ? 0 : 1; UI.playerModal(d.id); UI.render(); },
     bid: (d) => done(M.bid(d.id, Number($('#bidFee').value) || 0), d.id),
-    buy: (d) => done(M.buy(d.id), d.id), gotf: () => UI.go('transfers'),
+    buy: (d) => UI.playerModal(d.id), gotf: () => UI.go('transfers'),
+    propose: (d) => done(L.recruit.propose(d.id, Number(d.m) || 1, 2), d.id), tamper: (d) => done(L.recruit.tamper(d.id), d.id),
+    approachok: (d) => { const r = L.recruit.acceptApproach(Number(d.i)); toast(r.msg, !r.ok); UI.render(); }, approachno: (d) => { S().approach.splice(Number(d.i), 1); UI.render(); },
+    pforce: () => { const r = L.career.setForce(!S().force); toast(r.msg, !r.ok); UI.render(); }, pcall: (d) => { const r = L.career.setCall(d.k); toast(r.msg, !r.ok); UI.render(); },
+    papproach: () => { const el = $('#pApproach'); if (!el || !el.value) return; const r = L.career.approach(el.value); toast(r.msg, !r.ok); UI.go(r.ok ? 'home' : 'poffers'); },
     renewall: () => { const r = M.renewAll(); toast(r.msg, !r.ok); UI.render(); },
     offerok: (d) => { const r = M.acceptOffer(Number(d.i)); toast(r.msg, !r.ok); UI.render(); },
     offerno: (d) => { S().offers.splice(Number(d.i), 1); UI.render(); },
@@ -547,7 +561,7 @@
   });
   document.addEventListener('change', (e) => {
     const el = e.target, k = el.dataset && el.dataset.chg; if (!k) return; const s = S(), f = UI.tf;
-    if (k === 'pcrole' || k === 'pcregion') { const pc = UI.ng.pc; pc.name = $('#pName').value; if (k === 'pcrole') pc.role = Number(el.value); else { pc.region = el.value; pc.teamId = null; } return UI.ngPlayer(); }
+    if (k === 'pcrole' || k === 'pcregion' || k === 'pctier') { const pc = UI.ng.pc; pc.name = $('#pName').value; if (k === 'pcrole') pc.role = Number(el.value); else if (k === 'pctier') { pc.tier = Number(el.value); pc.teamId = null; } else { pc.region = el.value; pc.teamId = null; } return UI.ngPlayer(); }
     if (L.net.role === 'guest' && REMOTE_CHG.has(k)) { L.net.send({ t: 'chg', k, ds: Object.assign({}, el.dataset), value: el.value, checked: el.checked }); return; }
     if (L.net.role === 'guest' && k === 'auto') return toast('이 설정은 방장만 바꿀 수 있습니다.', 1);
     UI.applyChange(k, el.dataset, el.value, el.checked);

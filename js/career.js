@@ -25,14 +25,14 @@
   // 새 커리어: 기존 팀 선택으로 만든 세계를 선수 모드로 바꾼다
   C.start = function (opt) {
     const s = S(), t = s.teams[opt.teamId], lg = s.leagues[t.league], ty = C.TYPES[opt.type];
-    const p = W.genPlayer(opt.region, opt.role, lg.base - 4, 17, 99);
+    const p = W.genPlayer(opt.region, opt.role, lg.base - (lg.tier === 1 ? 7 : 4), 17, 99);
     delete s.names[p.n.toLowerCase()];
     p.n = opt.name; p.me = 1; p.gen = 0; p.h = opt.region === 'LAN' || opt.region === 'LAS' ? 'LAT' : opt.region;
     for (const k in ty.up) p.a[I[k]] = clamp(Math.round(p.a[I[k]] + ty.up[k]), 1, 20);
     for (const k in ty.down) p.a[I[k]] = clamp(Math.round(p.a[I[k]] - ty.down[k]), 1, 20);
-    p.pot = R().int(90, 97); p.st = L.playerStyles(p);
+    p.pot = 99; p.st = L.playerStyles(p);
     p.t = t.id; p.wage = Math.round(1200 * W.infl()); p.cEnd = s.year + 1; p.mor = 0.7;
-    s.mode = 'player'; s.mgrs = []; s.me = p.id; s.user = t.id; s.act = 'solo'; s.cash = 0; s.poffers = []; s.news = [];
+    s.mode = 'player'; s.mgrs = []; s.me = p.id; s.user = t.id; s.act = 'solo'; s.cash = 0; s.poffers = []; s.news = []; s.joinY = s.year; s.force = 0; s.call = '';
     W.autoLineup(t);
     W.news('프로 데뷔', `${t.name}에 입단했습니다. 주전 자리는 실력으로 따내야 합니다. [활동]에서 이번 주에 무엇에 집중할지 정하고, 화면 오른쪽 위의 [계속 진행]을 눌러 시즌을 시작하세요.`, 'board');
     return p;
@@ -47,6 +47,7 @@
     // 소속 동기화: 방출·이적으로 팀이 바뀌면 따라간다
     if (!me.t || !s.teams[me.t] || s.teams[me.t].pseudo) C.findTeam('방출');
     if (me.t !== s.user) s.user = me.t;
+    const t0 = s.teams[s.user]; if (s.force || s.call) { if (C.influence() < 45) { s.force = 0; s.call = ''; W.news('영향력 약화', '팀 내 영향력이 떨어져 감독이 다시 선발과 전술을 직접 정합니다.', 'board'); } else { C.applyForce(t0); if (s.call && C.influence() >= 70) t0.tactics.style = s.call; } }
     if (s.day % 7 === 0) C.weekly();
     s.poffers = s.poffers.filter((o) => now() - o.at < 21 && s.teams[o.tid] && o.tid !== me.t);
   };
@@ -84,7 +85,7 @@
   };
   C.join = function (t, wage, years, why) {
     const s = S(), me = C.me(), old = s.teams[me.t];
-    me.t = t.id; me.wage = wage; me.cEnd = s.year + years - 1; me.mor = 0.75; me.list = 0; s.user = t.id; s.poffers = [];
+    me.t = t.id; me.wage = wage; me.cEnd = s.year + years - 1; me.mor = 0.75; me.list = 0; s.user = t.id; s.poffers = []; s.joinY = s.year; s.force = 0; s.call = '';
     if (old && !old.pseudo && old.id !== t.id) { old.lineup = old.lineup.filter((x) => x !== me.id); M.ensureRoles(old); }
     W.autoLineup(t);
     W.news(`${why}: ${t.name}`, `${t.name}(${s.leagues[t.league].name})에 합류했습니다. 연봉 ${L.fmtMoney(wage)}, ${me.cEnd}년까지.`, 'transfer');
@@ -99,6 +100,37 @@
     const s = S(), me = C.me();
     const t = C.interested(true)[0] || Object.values(s.leagues).filter((l) => l.tier === 2).flatMap((l) => l.teams).map((id) => s.teams[id]).sort((a, b) => a.rep - b.rep)[0];
     C.join(t, W.wageAsk(me), 2, why === '방출' ? '새 팀 합류' : '이적');
+  };
+  // 팀 내 영향력(0~100): 명성, 팀 평균 대비 실력, 팀에서 보낸 시간
+  C.influence = function () {
+    const s = S(), me = C.me(), t = s.teams[s.user];
+    return Math.round(clamp(L.recruit.fame(me) * 0.45 + (L.ovr(me) - W.teamOvr(t)) * 4 + (s.year - (s.joinY || s.year)) * 7 + 10, 0, 100));
+  };
+  C.applyForce = function (t) { // 감독의 선발을 무시하고 내가 뛴다
+    const s = S(), me = C.me(); if (!s.force || t.lineup.includes(me.id) || t.lineup.length < 5) return;
+    const out = s.players[t.lineup[me.r]]; t.lineup[me.r] = me.id; if (out) out.mor = clamp(out.mor - 0.01, 0.05, 1);
+  };
+  C.setForce = function (v) {
+    const s = S(); if (v && C.influence() < 55) return { ok: 0, msg: '영향력 55 이상이어야 선발을 요구할 수 있습니다.' };
+    s.force = v ? 1 : 0; return { ok: 1, msg: v ? '감독에게 선발 출전을 요구했습니다.' : '선발 결정을 감독에게 맡깁니다.' };
+  };
+  C.setCall = function (k) {
+    const s = S(); if (k && C.influence() < 70) return { ok: 0, msg: '영향력 70 이상이어야 팀 전술에 입김을 넣을 수 있습니다.' };
+    s.call = k || ''; return { ok: 1, msg: k ? `팀이 ${L.STYLES[k].ko} 조합 위주로 경기합니다.` : '전술을 감독에게 맡깁니다.' };
+  };
+  // 원하는 팀에 내가 먼저 입단을 타진한다
+  C.approach = function (tid) {
+    const s = S(), me = C.me(), t = s.teams[tid], r = R();
+    if (!t || tid === me.t) return { ok: 0, msg: '지금 소속된 팀입니다.' };
+    if (!W.windowOpen()) return { ok: 0, msg: '이적 시장이 열려 있을 때만 팀을 옮길 수 있습니다.' };
+    s.asked = s.asked || {}; if (s.asked[tid] && now() - s.asked[tid] < 28) return { ok: 0, msg: '최근에 타진했던 팀입니다. 4주 뒤에 다시 시도할 수 있습니다.' };
+    s.asked[tid] = now();
+    if (W.isImport(me, t) && M.imports(t) >= 2) return { ok: 0, msg: `${t.name}은(는) 용병 자리가 없습니다.` };
+    const st = s.players[t.lineup[me.r]], gap = L.ovr(me) - (st ? L.ovr(st, me.r) : 0);
+    const p = clamp(0.45 + gap * 0.09 + (L.recruit.fame(me) - (t.rep - 44) / 0.46) / 120, 0.03, 0.95);
+    if (r() > p) return { ok: 0, msg: `${t.name}이(가) 정중히 거절했습니다. 지금 ${L.ROLE_KO[me.r]} 자리에 만족하고 있습니다.` };
+    C.join(t, Math.round((W.wageAsk(me) * (gap > 0 ? 1.05 : 0.8)) / 100) * 100, 2, '이적');
+    return { ok: 1, msg: `${t.name} 입단 성사` };
   };
   C.afterExpire = function () { if (C.on() && !C.me().t) C.findTeam('방출'); };
   C.season = function () { const me = C.me(); return me.ss.g ? { g: me.ss.g, w: me.ss.w, kda: `${me.ss.k}/${me.ss.d}/${me.ss.a}`, r: (me.ss.r / me.ss.g).toFixed(2) } : null; };

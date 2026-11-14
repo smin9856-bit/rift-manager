@@ -238,3 +238,14 @@ label.chk{margin:7px 0;color:var(--text)}
   .start-art{display:none}.start-left{padding:8vh 24px 4vh}
   .livebody{grid-template-columns:1fr}.livefoot{grid-template-columns:1fr;height:auto}.live{height:auto}
 }
+
+/* 영입 제안 */
+.acts .btn small{display:block;font-weight:400;font-size:11px;margin-top:1px}.acts .btn.primary small{color:#3d3413!important}
+small.good,span.good{color:var(--good)}small.bad{color:var(--bad)}small.warn,span.warn{color:var(--warn)}
+/* 승리 확률 바: 맵을 가리지 않게 화면 맨 위 가운데(중계 머리줄)로 */
+.winbar{position:fixed;top:13px;left:50%;transform:translateX(-50%);padding:5px 16px;gap:14px;z-index:45}
+.winbar .wb-mid{display:flex;align-items:center;gap:10px;width:auto}.winbar .wb-bar{width:170px;margin:0;order:2}.winbar .wb-gold{order:1;min-width:92px;text-align:right}.winbar .wb-label{display:none}
+.winbar .wb-team span{font-size:20px}
+.live:has(.winbar) .match-meta{visibility:hidden}
+.menu button{text-align:left}
+.start-art svg{opacity:.5;right:-14%;height:108%}

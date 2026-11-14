@@ -38,15 +38,36 @@
       for (let i = 0; i < tier.n; i++) {
         const age = r.int(15, 17), ovr = clamp(base - 23 + tier.q * 1.5 + t.youth + r.norm(0, 3), 35, 72);
         const p = W.genPlayer(sc.region, r.int(0, 4), ovr, age, 99), o = L.ovr(p);
-        const gem = r() < 0.05 + tier.q * 0.035 + t.youth * 0.01;
+        const rf = base >= 76 ? 1 : base >= 70 ? 0.7 : base >= 64 ? 0.45 : 0.25; // 메이저 지역일수록 특급 재능이 자주 나온다
+        const gem = r() < (0.03 + tier.q * 0.03 + t.youth * 0.008) * rf;
         p.pot = Math.round(clamp(gem ? r.range(88, 97) : 63 + r.norm(0, 8) + tier.q * 3 + t.youth * 1.5 + (base - 60) * 0.35, o + 3, 97));
         p.potSeen = Math.round(clamp(p.pot + r.norm(0, Math.max(1.5, 7 - t.youth)), o + 1, 99)); // 스카우트 보고서의 예상치 (아카데미 등급이 높을수록 정확)
         p.t = 'scout'; p.cEnd = s.year + 9; p.wage = 0; p.found = now(); p.youthOf = 1; names.push(`${p.n}(${L.ROLE_KO[p.r]}, ${age}세)`);
       }
-      W.news('유스 발굴 보고', `${W.regionName(sc.region)} ${tier.name} 결과, 유망주 ${tier.n}명을 찾았습니다: ${names.join(', ')}. 30일 안에 [유스] 화면에서 아카데미 입단 여부를 정하세요.`, 'youth');
+      // 아직 데뷔하지 않은 실제 선수를 찾아낼 수도 있다
+      const pool = Y.realCandidates(sc.region); let nReal = pool.length && r() < [0.3, 0.55, 0.9][tier.q] ? 1 : 0; if (tier.q === 2 && pool.length > 1 && r() < 0.4) nReal++;
+      for (let i = 0; i < nReal && pool.length; i++) { const c = pool.splice(r.int(0, pool.length - 1), 1)[0], p = Y.realProspect(c.src, c.year); names.push(`${p.n}(${L.ROLE_KO[p.r]}, ${s.year - p.by}세, ${c.year}년 데뷔 예정인 실제 선수)`); }
+      W.news('유스 발굴 보고', `${W.regionName(sc.region)} ${tier.name} 결과, 유망주 ${names.length}명을 찾았습니다: ${names.join(', ')}. 30일 안에 [유스] 화면에서 아카데미 입단 여부를 정하세요.`, 'youth');
     }
     for (const p of Y.prospects()) if (now() - p.found > 30) delete s.players[p.id];
     if (s.day % 7 === 0) { const n = Y.academy().length; if (n) W.pay(t, -Math.round((n * Y.wage()) / 48), '아카데미 운영비'); }
+  };
+  // 앞으로 4년 안에 그 지역에서 데뷔할 실제 선수들 (잠재력 높은 순 상위)
+  Y.realCandidates = function (region) {
+    const s = S(), out = [], rg = region === 'LAN' || region === 'LAS' ? 'LAT' : region;
+    for (let yr = s.year + 1; yr <= s.year + 4; yr++) for (const src of (G.LFM_ROOKIES && G.LFM_ROOKIES[yr]) || []) {
+      const srg = src.rg === 'LAN' || src.rg === 'LAS' ? 'LAT' : src.rg;
+      if (srg === rg && !s.players[src.id]) out.push({ src, year: yr });
+    }
+    return out.sort((a, b) => b.src.pot - a.src.pot).slice(0, 14);
+  };
+  Y.realProspect = function (src, year) {
+    const s = S(), yrs = year - s.year;
+    const p = { ...src, a: src.a.map((v) => Math.max(1, Math.round(v - yrs * 0.9 - 0.5))), real: 1, debut: year, dest: src.ot || null };
+    delete p.ot; if (!p.by) p.by = year - 18;
+    p.form = 1; p.mor = 0.65; p.st = L.playerStyles(p); p.ss = { g: 0, w: 0, k: 0, d: 0, a: 0, r: 0 }; p.car = []; p.tr = -1; p.list = 0;
+    p.rg = src.rg; p.h = W.homeOf(p); p.t = 'scout'; p.cEnd = s.year + 9; p.wage = 0; p.found = now(); p.youthOf = 1; p.potSeen = src.pot;
+    pseudo('scout', '발굴 후보'); s.players[p.id] = p; s.names[p.n.toLowerCase()] = 1; return p;
   };
   Y.sign = function (pid) {
     const s = S(), t = s.teams[s.user], p = s.players[pid];

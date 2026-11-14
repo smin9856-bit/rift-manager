@@ -3,7 +3,7 @@ import fs from 'node:fs';
 globalThis.window = globalThis; const store = {}; globalThis.localStorage = { getItem: (k) => store[k] || null, setItem: (k, v) => { store[k] = v; } };
 const load = (f) => (0, eval)(fs.readFileSync(new URL('../' + f, import.meta.url), 'utf8'));
 const year = Number(process.argv[2] || 2018), seasons = Number(process.argv[3] || 3);
-['data/index.js', `data/y${year}.js`, 'data/rookies.js', 'js/core.js', 'js/skills.js', 'js/engine.js', 'js/world.js', 'js/sim.js', 'js/manage.js', 'js/staff.js', 'js/youth.js', 'js/career.js'].forEach(load);
+['data/index.js', `data/y${year}.js`, 'data/rookies.js', 'js/core.js', 'js/skills.js', 'js/engine.js', 'js/world.js', 'js/sim.js', 'js/manage.js', 'js/recruit.js', 'js/staff.js', 'js/youth.js', 'js/career.js'].forEach(load);
 const L = globalThis.LFM, W = L.world, C = L.career;
 let S = W.newGame({ year, mode: 'team', teamId: globalThis.LFM_DATA[year].leagues[0].teams[0], seed: 11 });
 const lg = S.leagues.KR2, tid = lg.teams.map((id) => S.teams[id]).sort((a, b) => a.rep - b.rep)[0].id;

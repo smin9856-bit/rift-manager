@@ -200,7 +200,7 @@
   function startSplit(lg, split) {
     const id = `${lg.id}:${split}`, n = lg.teams.length, win = split === 'spring' ? CAL.spring : CAL.summer;
     S.comps[id] = { id, type: 'split', lid: lg.id, split, stage: 'reg', teams: lg.teams.slice(), name: `${S.year} ${lg.name} ${split === 'spring' ? '스프링' : '서머'}`, done: 0, rank: null };
-    addRR(id, 'reg', lg.teams, n < 12, L.competition?.seriesLength(lg,S.year,split)||1, win[0], win[1]);
+    addRR(id, 'reg', lg.teams, false, 1, win[0], win[1]); // 정규 시즌은 1회전 단판
   }
 
   function progressSplit(c) {
