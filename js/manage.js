@@ -73,6 +73,7 @@
   };
   M.bid = function (pid, fee) {
     const s = S(), p = s.players[pid], t = s.teams[s.user], seller = s.teams[p.t];
+    if (W.managed(p.t)) return { ok: 0, msg: '다른 참가자가 운영하는 팀의 선수는 영입할 수 없습니다.' };
     if (!W.windowOpen()) return { ok: 0, msg: '이적 시장이 닫혀 있습니다. 스토브리그나 시즌 중 이적 기간에 다시 시도하세요.' };
     if (W.roster(t.id).length >= 10) return { ok: 0, msg: '로스터는 최대 10명입니다.' };
     if (t.money < fee) return { ok: 0, msg: '자금이 부족합니다.' };
@@ -91,6 +92,7 @@
     if (dm == null) return { ok: 0, why: '우리 팀에 올 생각이 없음 (팀 명성 부족)' };
     const full = W.roster(t.id).length >= 10;
     if (!p.t) { const fee = Math.round(dm * 0.15); return { ok: !full && t.money >= fee, why: full ? '로스터가 가득 참' : t.money >= fee ? '' : '자금 부족', fee, wage: dm, fa: 1 }; }
+    if (W.managed(p.t)) return { ok: 0, why: '다른 참가자가 운영하는 팀의 선수' };
     const fee = M.askFee(p, t);
     if (!W.windowOpen()) return { ok: 0, why: '이적 시장이 열리면 영입 가능', fee, wage: dm };
     return { ok: !full && t.money >= fee, why: full ? '로스터가 가득 참' : t.money >= fee ? '' : '자금 부족', fee, wage: dm };

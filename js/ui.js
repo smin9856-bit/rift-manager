@@ -14,7 +14,7 @@
   const pl = (p, label) => `<a class="lnk" data-act="player" data-id="${esc(p.id)}">${esc(label || p.n)}</a>`;
   const tm = (t) => (t ? `<a class="lnk" data-act="team" data-id="${esc(t.id)}"><i class="dot" style="background:${t.color}"></i>${esc(t.name)}</a>` : '<span class="dim">무소속</span>');
   const potStars = (p) => { const v = p.pot >= 92 ? 5 : p.pot >= 86 ? 4.5 : p.pot >= 81 ? 4 : p.pot >= 76 ? 3.5 : p.pot >= 71 ? 3 : p.pot >= 66 ? 2.5 : p.pot >= 60 ? 2 : 1.5; return starHtml(v); };
-  const toast = (msg, bad) => { const t = $('#toast'); t.textContent = msg; t.className = 'on' + (bad ? ' bad' : ''); clearTimeout(toast.t); toast.t = setTimeout(() => (t.className = ''), 3200); };
+  const toast = (msg, bad) => { if (UI.remote) { UI.remoteMsg = { msg, bad: bad ? 1 : 0 }; return; } const t = $('#toast'); t.textContent = msg; t.className = 'on' + (bad ? ' bad' : ''); clearTimeout(toast.t); toast.t = setTimeout(() => (t.className = ''), 3200); };
   const loadScript = (src) => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error(src)); document.head.appendChild(s); });
   const loadYear = (y) => (G.LFM_DATA && G.LFM_DATA[y] ? Promise.resolve() : loadScript(`data/y${y}.js`));
   const phase = (d) => (d < 14 ? '프리시즌' : d <= 83 ? '스프링 정규 시즌' : d < 104 ? '스프링 플레이오프' : d < 140 ? 'MSI 기간' : d <= 209 ? '서머 정규 시즌' : d < 232 ? '서머 플레이오프' : d < 245 ? '승강전' : d < 291 ? '월드 챔피언십' : '스토브리그');
@@ -22,7 +22,7 @@
   // ───────── 시작 메뉴 ─────────
   UI.boot = function () {
     $('#app').innerHTML = `<div class="start"><div class="logo">RIFT<span>MANAGER</span></div><p class="tag">2014–2026 · 실제 리그와 선수 데이터로 즐기는 e스포츠 구단 운영</p>
-      <div class="startbtns"><button class="btn primary big" data-act="ng">새 게임</button>${W.hasSave(0) ? '<button class="btn big" data-act="loadgame">이어하기</button>' : ''}</div><a class="preview-link" href="match-preview.html">새로운 경기 중계 미리보기 ↗</a>
+      <div class="startbtns"><button class="btn primary big" data-act="ng">새 게임</button><button class="btn big" data-act="mpjoin">멀티플레이 참가</button>${W.hasSave(0) ? '<button class="btn big" data-act="loadgame">이어하기</button>' : ''}</div><a class="preview-link" href="match-preview.html">새로운 경기 중계 미리보기 ↗</a>
       <p class="credit">선수·팀·대회 기록 출처: Leaguepedia (CC BY-SA 3.0). 능력치는 실제 경기 기록에서 계산한 추정치이며 비공식 팬 프로젝트입니다.<br>챔피언·스킬 이미지 © Riot Games · Data Dragon. Riot Games가 보증하거나 공식적으로 관여하는 프로젝트가 아닙니다.</p></div>`;
   };
   UI.newGame = function () {
@@ -82,7 +82,7 @@
   };
 
   // ───────── 메인 화면 틀 ─────────
-  const NAV = [['home', '홈'], ['inbox', '알림'], ['squad', '스쿼드'], ['tactics', '전술'], ['training', '훈련'], ['schedule', '일정'], ['league', '리그'], ['world', '국제 대회'], ['transfers', '이적 시장'], ['youth', '유스'], ['staff', '감독'], ['biz', '수익 활동'], ['club', '구단']];
+  const NAV = [['home', '홈'], ['inbox', '알림'], ['squad', '스쿼드'], ['tactics', '전술'], ['training', '훈련'], ['schedule', '일정'], ['league', '리그'], ['world', '국제 대회'], ['transfers', '이적 시장'], ['youth', '유스'], ['staff', '감독'], ['biz', '수익 활동'], ['club', '구단'], ['mp', '멀티플레이']];
   const PNAV = [['home', '내 선수'], ['inbox', '알림'], ['pact', '활동'], ['pteam', '우리 팀'], ['poffers', '이적 제안'], ['schedule', '일정'], ['league', '리그'], ['world', '국제 대회']];
   UI.main = function () {
     $('#app').innerHTML = `<div class="top"><div class="club" id="topClub"></div><div class="date" id="topDate"></div><div class="money" id="topMoney"></div>
@@ -90,13 +90,15 @@
       <div class="body"><nav id="nav"></nav><main id="main"></main></div>`;
     UI.go('home');
   };
-  UI.go = function (scr) { UI.screen = scr; UI.render(); const m = $('#main'); if (m) m.scrollTop = 0; };
+  UI.toast = toast;
+  UI.go = function (scr) { if (UI.remote) return; UI.screen = scr; UI.render(); const m = $('#main'); if (m) m.scrollTop = 0; };
   UI.render = function () {
+    if (UI.remote || !$('#topClub')) return;
     const s = S(), t = s.teams[s.user], lg = s.leagues[t.league], um = W.userMatchToday();
     $('#topClub').innerHTML = `<i class="crest" style="background:${t.color}">${esc(t.short)}</i><div><b>${esc(t.name)}</b><span>${esc(lg.name)} · ${W.regionName(lg.region)}</span></div>`;
     $('#topDate').innerHTML = `<b>${W.dateStr(s.day, s.year)}</b><span>${phase(s.day)}${W.windowOpen() ? ' · 이적 시장 열림' : ''}</span>`;
     $('#topMoney').innerHTML = s.mode === 'player' ? `<span>내 자산</span><b>${money(s.cash)}</b>` : `<span>자금</span><b class="${t.money < 0 ? 'bad' : ''}">${money(t.money)}</b>`;
-    $('#btnCont').textContent = um ? '경기 준비' : '계속 진행';
+    $('#btnCont').textContent = L.net.role === 'guest' ? (L.net.myReady ? '준비 취소' : '준비 완료') : L.net.role === 'host' ? '계속 진행' : um ? '경기 준비' : '계속 진행';
     const unread = s.news.filter((n) => !n.read).length;
     const pm = s.mode === 'player';
     $('#nav').innerHTML = (pm ? PNAV : NAV).map(([k, label]) => `<button class="${UI.screen === k ? 'sel' : ''}" data-act="go" data-s="${k}">${label}${k === 'inbox' && unread ? `<em>${unread}</em>` : ''}${k === 'transfers' && (s.offers || []).length ? `<em>${s.offers.length}</em>` : ''}${k === 'poffers' && (s.poffers || []).length ? `<em>${s.poffers.length}</em>` : ''}</button>`).join('');
@@ -301,6 +303,24 @@
         <section class="card"><h3>받은 제안</h3>${rows || '<p class="dim">지금은 제안이 없습니다. 좋은 평점을 쌓고 능력치를 올리면 더 큰 팀이 찾아옵니다.</p>'}</section>
         <section class="card"><div class="upg"><div><b>이적 요청</b><span class="dim">팀에 이적을 요청합니다. 주전이 아니어도 나를 쓰려는 팀들의 제안이 더 많이 들어옵니다.</span></div><button class="btn sm" data-act="plist">${me.list ? '요청 취소' : '이적 요청하기'}</button></div></section>`;
     },
+    mp() {
+      const s = S(), N = L.net, t = s.teams[s.user];
+      const row = (name, tid, state) => `<tr class="${tid === s.user ? 'me' : ''}"><td><b>${esc(name)}</b></td><td>${tm(s.teams[tid])}</td><td class="dim">${esc(s.leagues[s.teams[tid].league].name)}</td><td>${state}</td></tr>`;
+      if (!N.role) return `<h2>멀티플레이</h2><section class="card"><h3>같은 리그에서 함께 진행하기</h3>
+        <p class="dim">지금 진행 중인 이 세계에 다른 사람을 초대합니다. 내가 방장이 되어 날짜를 진행하고, 참가자는 방 코드로 접속해 각자 다른 팀을 운영합니다. 서로 만나는 경기는 방장이 결과를 계산하고 각자 화면에서 같은 경기를 봅니다.</p>
+        <ul class="tips"><li>방장의 브라우저가 열려 있는 동안에만 진행됩니다.</li><li>참가자는 게임 주소를 열고 시작 화면에서 [멀티플레이 참가]를 눌러 방 코드를 입력합니다.</li><li>멀티플레이에서는 경기 전 밴픽 화면이 없습니다. [전술] 화면에 정해 둔 내용으로 경기합니다.</li><li>저장은 방장만 합니다. 방장이 저장한 게임을 다시 열어 방을 만들면 같은 방 코드로 이어서 할 수 있습니다.</li></ul>
+        <div class="actions" style="justify-content:flex-start"><button class="btn primary" data-act="mphost">방 만들기</button></div></section>`;
+      const guests = (s.mp ? s.mp.guests : []);
+      if (N.role === 'host') {
+        const online = (tid) => N.conns.some((c) => c.open && c.tid === tid);
+        return `<h2>멀티플레이 <span class="good sm">방장</span></h2><section class="card"><div class="coachhead"><div><h3>방 코드</h3><p class="dim">참가자에게 이 코드를 알려 주세요. 게임 주소를 열고 [멀티플레이 참가]에서 입력합니다.</p></div><div class="big a5" style="letter-spacing:.12em">${esc(N.code)}</div></div><p class="dim sm">${esc(N.status)}</p></section>
+          <section class="card"><h3>참가자</h3>${table(['이름', '팀', '리그', '상태'], [row('나 (방장)', s.user, '<span class="good">진행 담당</span>'), ...guests.map((g) => row(g.name, g.tid, !online(g.tid) ? '<span class="bad">접속 끊김</span>' : N.ready[g.tid] ? '<span class="good">준비 완료</span>' : '<span class="dim">준비 중</span>'))])}
+          <p class="dim sm">모두 준비되면 [계속 진행]을 누르세요. 준비하지 않은 참가자가 있으면 한 번 더 눌러야 진행됩니다. 접속이 끊긴 참가자의 팀은 마지막 설정 그대로 경기합니다.</p></section>`;
+      }
+      return `<h2>멀티플레이 <span class="dim sm">참가자</span></h2><section class="card"><div class="kv"><span>방 코드</span><b>${esc(N.code)}</b><span>내 팀</span><b>${tm(t)}</b><span>내 상태</span><b class="${N.myReady ? 'good' : 'dim'}">${N.myReady ? '준비 완료 — 방장이 진행하기를 기다리는 중' : '준비 중'}</b><span>연결</span><b>${esc(N.status || '연결됨')}</b></div>
+        <p class="dim sm">스쿼드·전술·이적을 마치면 오른쪽 위 [준비 완료]를 누르세요. 날짜 진행은 방장이 합니다. 유스 발굴과 자동 재계약 설정은 지금은 방장만 쓸 수 있습니다.</p></section>
+        <section class="card"><h3>참가자</h3>${table(['이름', '팀', '리그', '상태'], [...(s.mgrs || []).filter((id) => !guests.some((g) => g.tid === id)).map((id) => row('방장', id, '<span class="good">진행 담당</span>')), ...guests.map((g) => row(g.name, g.tid, N.ready[g.tid] ? '<span class="good">준비 완료</span>' : '<span class="dim">준비 중</span>'))])}</section>`;
+    },
     club() {
       const s = S(), t = s.teams[s.user], g = t.goalNow || W.goal(t);
       const up = (kind, name, desc) => `<div class="upg"><div><b>${name} ${t[kind]}단계</b><span class="dim">${desc}</span></div>${t[kind] >= 5 ? '<span class="dim">최고 등급</span>' : `<button class="btn sm" data-act="upgrade" data-k="${kind}">확장 (${money(M.facCost(t[kind]))})</button>`}</div>`;
@@ -349,6 +369,7 @@
 
   // ───────── 모달 ─────────
   UI.playerModal = function (id) {
+    if (UI.remote) return;
     const s = S(), p = s.players[id]; if (!p) return; const t = p.t ? s.teams[p.t] : null, ut = s.teams[s.user], mine = p.t === s.user, o = L.ovr(p);
     const attr = L.ATTRS.map((k, i) => `<div class="attr" title="${L.ATTR_DESC[i]}"><span>${L.ATTR_KO[i]}</span><b class="${ac(p.a[i])}">${p.a[i]}</b><i><u style="width:${p.a[i] * 5}%"></u></i></div>`).join('');
     let act = '';
@@ -371,6 +392,7 @@
     $('#modal').classList.add('on');
   };
   UI.teamModal = function (id) {
+    if (UI.remote) return;
     const s = S(), t = s.teams[id]; if (!t) return; const ros = W.roster(id).sort((a, b) => a.r - b.r || L.ovr(b) - L.ovr(a)), lg = s.leagues[t.league]; sim.lineup(t);
     $('#modal').innerHTML = `<div class="mbox"><button class="x" data-act="close">✕</button><header><div><h2><i class="dot" style="background:${t.color}"></i>${esc(t.name)}</h2><span class="dim">${esc(lg.name)} · ${W.regionName(t.region)}${t.gen ? ' · 가상 구단' : ''}</span></div><div>${starHtml(W.stars(t))}</div></header>
       <div class="kv k4"><span>평균 능력</span><b>${Math.round(W.teamOvr(t))}</b><span>명성</span><b>${Math.round(t.rep)}</b><span>조합 성향</span><b>${L.STYLES[t.tactics.style].ko}</b><span>감독</span><b>${L.staff.of(t) ? esc(L.staff.of(t).n) : '-'}</b></div>
@@ -378,7 +400,7 @@
       ${t.hist.length ? `<h4>최근 성적</h4>${table(['연도', '대회', '순위'], t.hist.slice(-6).reverse().map((h) => `<tr><td>${h.year}</td><td>${esc(h.comp.replace(/^\d+ /, ''))}</td><td>${h.rank}위</td></tr>`))}` : ''}</div>`;
     $('#modal').classList.add('on');
   };
-  const closeModal = () => { $('#modal').classList.remove('on'); $('#modal').innerHTML = ''; };
+  const closeModal = () => { if (UI.remote) return; $('#modal').classList.remove('on'); $('#modal').innerHTML = ''; };
 
   // ───────── 진행 ─────────
   let busy = false;
@@ -394,7 +416,54 @@
     if (t.lineup.filter((id) => W.isImport(s.players[id], t)).length > 2) { toast('선발 명단에 용병이 2명을 넘습니다. 스쿼드에서 조정하세요.', 1); UI.go('squad'); return; }
     V.open(m, async () => { busy = true; W.advance(); busy = false; try { W.save(0); } catch (e) { /* 저장 실패는 무시 */ } UI.go('home'); });
   };
+  // ───────── 멀티플레이 화면 ─────────
+  UI.mpJoin = function () {
+    const N = L.net;
+    $('#app').innerHTML = `<div class="wizard"><h1>멀티플레이 참가</h1><p class="dim">방장에게 받은 방 코드를 입력하세요. 방장이 게임을 열어 두고 있어야 접속됩니다.</p>
+      <label>방 코드<input id="mpCode" maxlength="5" value="${esc(N.code || '')}" placeholder="예: K7M2Q" style="text-transform:uppercase;letter-spacing:.2em"></label>
+      <label>내 이름<input id="mpName" maxlength="14" value="${esc(N.name || '')}" placeholder="예: 민수"></label>
+      ${N.status ? `<p class="${/중…/.test(N.status) ? 'dim' : 'bad'}">${esc(N.status)}</p>` : ''}
+      <div class="actions"><button class="btn" data-act="boot">뒤로</button><button class="btn primary" data-act="mpjoingo">접속</button></div></div>`;
+  };
+  UI.mpPick = function (d) {
+    UI.mpList = d;
+    $('#app').innerHTML = `<div class="wizard wide"><h1>${d.year} 시즌 · 맡을 팀 고르기</h1><p class="dim">다른 사람이 이미 맡은 팀은 목록에 없습니다.</p>
+      ${d.list.filter((lg) => lg.teams.length).map((lg) => `<h3>${lg.tier}부 · ${esc(lg.name)}</h3><div class="teamgrid">${lg.teams.sort((a, b) => b.ovr - a.ovr).map((t) => `<button class="teamcard" data-act="mppick" data-id="${esc(t.id)}"><b>${esc(t.name)}</b>${starHtml(t.stars)}<span class="dim">평균 능력 ${t.ovr}</span></button>`).join('')}</div>`).join('')}</div>`;
+  };
+  UI.mpReplay = function (pkg) { if (V.active()) return; V.replay(pkg, () => UI.go('home')); };
+  UI.hostCont = async function () {
+    const N = L.net; if (busy || V.active()) return;
+    const wait = N.waiting();
+    if (wait.length && !UI.forceGo) { UI.forceGo = true; return toast(`아직 준비하지 않은 참가자: ${wait.map((g) => g.name).join(', ')}. 한 번 더 누르면 그대로 진행합니다.`, 1); }
+    UI.forceGo = false; busy = true; const s = S(), ov = $('#overlay'); ov.classList.add('on');
+    const last = s.news[0] ? s.news[0].id : 0; let pkg = null;
+    for (let i = 0; i < 21; i++) {
+      ov.textContent = `${W.dateStr(s.day, s.year)} 진행 중…`; await sleep();
+      const hm = N.humanMatches();
+      if (hm.length) { for (const m of hm) { const p = N.playHuman(m); if (p) pkg = p; } W.advance(); break; }
+      W.advance();
+      if (N.humanMatches().length) break;
+      if (s.news[0] && s.news[0].id !== last) break;
+    }
+    ov.classList.remove('on'); busy = false; N.ready = {}; N.sync();
+    if (s.day % 7 === 0) { try { W.save(0); } catch (e) { /* 무시 */ } }
+    if (pkg) UI.mpReplay(pkg); else UI.go(s.news[0] && s.news[0].id !== last ? 'inbox' : 'home');
+  };
+  const REMOTE_ACTS = new Set(['autolineup', 'tac', 'sign', 'renew', 'release', 'list', 'buy', 'offerok', 'offerno', 'upgrade', 'hirecoach', 'deal', 'fanevent', 'renewall']);
+  const REMOTE_CHG = new Set(['lineup', 'train', 'content']);
+  const HOST_ONLY = new Set(['scout', 'ysign', 'ypromote', 'ydrop', 'save', 'mphost']);
+  // 참가자의 조작을 방장에게 보낸다. 처리했으면 true.
+  function guestAct(act, ds) {
+    const N = L.net; if (N.role !== 'guest') return false;
+    if (act === 'continue') { N.setReady(!N.myReady); UI.render(); return true; }
+    if (HOST_ONLY.has(act)) { toast('이 기능은 멀티플레이에서 방장만 쓸 수 있습니다.', 1); return true; }
+    if (!REMOTE_ACTS.has(act)) return false;
+    N.send({ t: 'act', act, d: Object.assign({}, ds) }); closeModal(); return true;
+  }
+
   UI.cont = async function () {
+    if (L.net.role === 'guest') return;
+    if (L.net.role === 'host') return UI.hostCont();
     if (busy || V.active()) return;
     const um = W.userMatchToday(); if (um) return UI.openMatch(um);
     busy = true; const s = S(), ov = $('#overlay'); ov.classList.add('on');
@@ -411,6 +480,7 @@
   };
 
   // ───────── 이벤트 ─────────
+  UI.runAct = (act, d) => { const f = ACT[act]; if (f) f(d); };
   const ACT = {
     boot: () => UI.boot(), ng: () => UI.newGame(),
     ngyear: (d) => { UI.ng.year = Number(d.y); UI.ng.teamId = null; UI.ng.lid = null; UI.newGame(); },
@@ -448,6 +518,9 @@
     pcstart: () => { const pc = UI.ng.pc; pc.name = $('#pName').value.trim(); if (pc.name.length < 2) return toast('선수 이름을 2자 이상 입력하세요.', 1); W.newGame({ year: UI.ng.year, mode: 'team', teamId: pc.teamId, seed: UI.ng.seed }); L.career.start(pc); UI.main(); },
     pact: (d) => { S().act = d.k; UI.render(); }, paccept: (d) => { const r = L.career.accept(Number(d.i)); toast(r.msg, !r.ok); UI.go(r.ok ? 'home' : 'poffers'); }, pdecline: (d) => { S().poffers.splice(Number(d.i), 1); UI.render(); },
     plist: () => { const me = L.career.me(); me.list = me.list ? 0 : 1; UI.render(); },
+    mpjoin: () => UI.mpJoin(), mpjoingo: () => { const c = $('#mpCode').value.trim(), n = $('#mpName').value.trim(); if (c.length < 5 || n.length < 1) return toast('방 코드 5자와 이름을 입력하세요.', 1); L.net.join(c, n); UI.mpJoin(); },
+    mppick: (d) => { L.net.send({ t: 'pick', tid: d.id }); $('#app').innerHTML = '<div class="wizard"><h2>방장의 세계를 불러오는 중…</h2></div>'; },
+    mphost: () => { L.net.host(); UI.render(); },
     hirecoach: (d) => { const r = L.staff.hire(d.id); toast(r.msg, !r.ok); UI.render(); },
     deal: (d) => { const r = L.staff.pickDeal(Number(d.i)); toast(r.msg, !r.ok); UI.render(); },
     fanevent: () => { const r = L.staff.fanEvent(); toast(r.msg, !r.ok); UI.render(); }, gobiz: () => UI.go('biz'),
@@ -456,20 +529,29 @@
   document.addEventListener('click', (e) => {
     if (e.target.id === 'modal') return closeModal();
     const el = e.target.closest('[data-act]'); if (!el || el.disabled) return;
+    if (guestAct(el.dataset.act, el.dataset)) return;
     const f = ACT[el.dataset.act]; if (f) f(el.dataset);
+    if (L.net.role === 'host') L.net.sync();
   });
   document.addEventListener('change', (e) => {
     const el = e.target, k = el.dataset && el.dataset.chg; if (!k) return; const s = S(), f = UI.tf;
     if (k === 'pcrole' || k === 'pcregion') { const pc = UI.ng.pc; pc.name = $('#pName').value; if (k === 'pcrole') pc.role = Number(el.value); else { pc.region = el.value; pc.teamId = null; } return UI.ngPlayer(); }
-    if (k === 'lineup') { const t = s.teams[s.user], i = Number(el.dataset.i), j = t.lineup.indexOf(el.value); if (j >= 0 && j !== i) t.lineup[j] = t.lineup[i]; t.lineup[i] = el.value; }
-    else if (k === 'content') s.teams[s.user].content = el.checked ? 1 : 0;
-    else if (k === 'auto') { s.auto = s.auto || {}; s.auto[el.dataset.k] = el.checked ? 1 : 0; }
-    else if (k === 'train') s.players[el.dataset.id].tr = Number(el.value);
-    else if (k === 'lgsel') { UI.lgSel = el.value; UI.split = null; }
-    else if (k === 'tfq') f.q = el.value; else if (k === 'tfrole') f.role = Number(el.value); else if (k === 'tfregion') f.region = el.value;
-    else if (k === 'tfage') f.maxAge = Number(el.value); else if (k === 'tfovr') f.minOvr = Number(el.value); else if (k === 'tfsort') f.sort = el.value; else if (k === 'tffa') f.fa = el.checked ? 1 : 0;
-    UI.render();
+    if (L.net.role === 'guest' && REMOTE_CHG.has(k)) { L.net.send({ t: 'chg', k, ds: Object.assign({}, el.dataset), value: el.value, checked: el.checked }); return; }
+    if (L.net.role === 'guest' && k === 'auto') return toast('이 설정은 방장만 바꿀 수 있습니다.', 1);
+    UI.applyChange(k, el.dataset, el.value, el.checked);
+    if (L.net.role === 'host') L.net.sync();
   });
+  UI.applyChange = function (k, ds, value, checked) {
+    const s = S(), f = UI.tf;
+    if (k === 'lineup') { const t = s.teams[s.user], i = Number(ds.i), j = t.lineup.indexOf(value); if (j >= 0 && j !== i) t.lineup[j] = t.lineup[i]; t.lineup[i] = value; }
+    else if (k === 'content') s.teams[s.user].content = checked ? 1 : 0;
+    else if (k === 'auto') { s.auto = s.auto || {}; s.auto[ds.k] = checked ? 1 : 0; }
+    else if (k === 'train') s.players[ds.id].tr = Number(value);
+    else if (k === 'lgsel') { UI.lgSel = value; UI.split = null; }
+    else if (k === 'tfq') f.q = value; else if (k === 'tfrole') f.role = Number(value); else if (k === 'tfregion') f.region = value;
+    else if (k === 'tfage') f.maxAge = Number(value); else if (k === 'tfovr') f.minOvr = Number(value); else if (k === 'tfsort') f.sort = value; else if (k === 'tffa') f.fa = checked ? 1 : 0;
+    UI.render();
+  };
   document.addEventListener('toggle', (e) => { if (e.target.dataset && e.target.dataset.toggle === 'tf') UI.tfOpen = e.target.open; }, true);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
   G.addEventListener('DOMContentLoaded', UI.boot);

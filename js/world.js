@@ -364,7 +364,7 @@
     S = JSON.parse(s); if (!S.mgrs) S.mgrs = [S.user]; R = L.rng((Date.now() & 0x7fffffff) || 1); return true;
   };
   W.hasSave = (slot) => { try { return !!localStorage.getItem('lfm2_save_' + (slot || 0)); } catch (e) { return false; } };
-  W.pay = function (t, amt, why) { t.money += amt; if (amt >= 0) t.fin.inc += amt; else t.fin.exp -= amt; if (t.id === S.user) { t.fin.log.unshift({ day: S.day, year: S.year, amt, why }); if (t.fin.log.length > 60) t.fin.log.length = 60; } };
+  W.pay = function (t, amt, why) { t.money += amt; if (amt >= 0) t.fin.inc += amt; else t.fin.exp -= amt; if (t.id === S.user || W.managed(t.id)) { t.fin.log.unshift({ day: S.day, year: S.year, amt, why }); if (t.fin.log.length > 60) t.fin.log.length = 60; } };
   W.stars = function (t) { // 전력 별점 0.5~5
     const all = Object.values(S.leagues).flatMap((l) => l.teams).map((id) => W.teamOvr(S.teams[id])).sort((a, b) => a - b);
     const o = W.teamOvr(t), lo = all[0], hi = all[all.length - 1];

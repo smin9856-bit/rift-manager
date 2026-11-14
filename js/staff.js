@@ -119,12 +119,15 @@
   };
   St.ticket = (t, m) => Math.round(((W.sponsor(t) * 0.1) / 40) * St.fanRatio(t) * (m && m.stage !== 'reg' ? 2 : 1));
   St.afterSeries = function (m) {
-    const s = S(); if (m.a !== s.user && m.b !== s.user) return;
-    const t = s.teams[s.user], win = (m.res.s[0] > m.res.s[1]) === (m.a === s.user), c = s.comps[m.comp];
-    W.pay(t, St.ticket(t, m), '경기 입장 수익');
-    if (win && t.deal && t.deal.win) W.pay(t, t.deal.win, '스폰서 승리 수당');
-    t.fans = Math.round(t.fans * (win ? 1.006 : 0.997));
-    if (win && m.stage === 'final') t.fans = Math.round(t.fans * (c && c.type === 'intl' ? 1.25 : 1.1));
+    const s = S(), c = s.comps[m.comp];
+    for (const tid of [m.a, m.b]) {
+      if (!W.managed(tid)) continue;
+      const t = s.teams[tid], win = (m.res.s[0] > m.res.s[1]) === (m.a === tid); if (t.fans == null) t.fans = St.fansBase(t);
+      W.pay(t, St.ticket(t, m), '경기 입장 수익');
+      if (win && t.deal && t.deal.win) W.pay(t, t.deal.win, '스폰서 승리 수당');
+      t.fans = Math.round(t.fans * (win ? 1.006 : 0.997));
+      if (win && m.stage === 'final') t.fans = Math.round(t.fans * (c && c.type === 'intl' ? 1.25 : 1.1));
+    }
   };
   St.eventReady = (t) => (S().year * 336 + S().day) - (t.eventAt || -99) >= 28;
   St.eventGain = (t) => Math.round(W.sponsor(t) * 0.025 * St.fanRatio(t));
@@ -159,5 +162,5 @@
       }
     }
   };
-  St.afterRollover = function () { const ut = S().teams[S().user]; St.newDeals(ut); };
+  St.afterRollover = function () { const s = S(); for (const tid of new Set([s.user, ...(s.mgrs || [])])) { const t = s.teams[tid]; if (t) { t.goalNow = W.goal(t); St.newDeals(t); if (t.fans == null) t.fans = St.fansBase(t); } } };
 })(typeof window !== 'undefined' ? window : globalThis);

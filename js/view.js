@@ -66,7 +66,24 @@
   }
   const stageKo = (m) => ({ reg: `정규 시즌 ${m.round || ''}라운드`, po1: '플레이오프 1라운드', po2: '플레이오프 준결승', final: '결승', playin: '플레이-인', groups: '그룹 스테이지', qf: '8강', sf: '4강', promo: '승강전' }[m.stage] || '');
 
+  // 멀티플레이: 방장이 계산한 경기를 같은 설정으로 다시 돌려 본다 (세계 상태는 건드리지 않는다)
+  V.replay = function (pkg, onDone) {
+    const s = W.get(), m = s.matches.find((x) => x.id === pkg.mid) || { id: pkg.mid, a: pkg.a, b: pkg.b, bo: pkg.games.length * 2 - 1, comp: '', stage: 'reg' }, ua = pkg.a === s.user;
+    st = { m, onDone, me: s.teams[s.user], opp: s.teams[ua ? pkg.b : pkg.a], ua, need: Math.ceil(m.bo / 2), meBlue: true, phase: 'live', match: null, speed: 3, boxes: [], selected: 2, camera: 'combat', effects: true, combatSlow: true, replay: pkg.games, spectate: true };
+    st.res = { s: [0, 0], g: [] };
+    st.effects = !G.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    st.tac = Object.assign({}, st.me.tactics); st.oppTac = st.opp.tactics;
+    document.getElementById('matchRoot').classList.add('spectate');
+    begin(); V.render();
+  };
   function begin() {
+    if (st.replay) {
+      const g = st.replay[st.res.g.length], sw = W.get(), cfg = JSON.parse(JSON.stringify(g.cfg));
+      st.meBlue = g.blue === st.me.id; st.blue = sw.teams[g.blue]; st.red = sw.teams[g.red];
+      st.picks = cfg.sides.flatMap((x) => x.players.map((p) => p.champion));
+      st.particles = []; st.lastFx = 0; st.visualTime = 0; st.cameraTransform = null; st.lastCameraTargets = null; st.lastCombatTime = -Infinity; st.wp = null;
+      st.match = new L.Match(cfg); st.evShown = 0; return;
+    }
     const s = W.get(); if (!st.spectate) s.teams[s.user].tactics = Object.assign({}, st.tac, { ban: -1 });
     st.oppTac = sim.aiTactics(st.opp, st.me);
     const blue = st.meBlue ? st.me : st.opp, red = st.meBlue ? st.opp : st.me;
@@ -82,7 +99,7 @@
   function finishGame() {
     stopLoop();
     const res = st.match.result(), aBlue = st.ua ? st.meBlue : !st.meBlue;
-    sim.record(st, res, aBlue); sim.apply(st.blue, st.red, res);
+    sim.record(st, res, aBlue); if (!st.replay) sim.apply(st.blue, st.red, res);
     st.last = res; st.won = (res.winner === 0) === st.meBlue; st.boxes.push(res);
     if (!st.won) st.meBlue = true; else st.meBlue = false; // 진 팀이 블루 진영
     st.phase = 'result'; V.render();
@@ -249,7 +266,7 @@
 
   // ───────── 결과 ─────────
   function resultHtml() {
-    const r = st.last, over = myScore() >= st.need || opScore() >= st.need;
+    const r = st.last, over = st.replay ? st.res.g.length >= st.replay.length : myScore() >= st.need || opScore() >= st.need;
     const row = (p) => `<tr><td>${L.ROLE_KO[p.role]}</td><td>${p.champion?`<img class="result-portrait" src="${C.icon(p.champion)}" alt="${esc(C.get(p.champion)?.name||'')}">`:''}<b>${esc(p.n)}</b>${p.champion?`<small class="result-champion">${esc(C.get(p.champion)?.name||'')}</small>`:''}</td><td>${p.k}/${p.d}/${p.a}</td><td>${p.cs == null ? '-' : p.cs}</td><td>${p.gold == null ? '-' : (p.gold / 1000).toFixed(1) + 'k'}</td><td>${p.dmg == null ? '-' : (p.dmg / 1000).toFixed(1) + 'k'}</td><td class="rt ${p.rating >= 8 ? 'good' : p.rating < 5.5 ? 'bad' : ''}">${p.rating.toFixed(1)}</td></tr>`;
     const mvp = r.players.filter((p) => p.side === r.winner).sort((a, b) => b.rating - a.rating)[0];
     const tbl = (si) => `<div class="box"><h3 style="color:${si ? RED : BLUE}">${esc((si ? st.red : st.blue).name)} ${r.winner === si ? '<span class="win">승리</span>' : ''}</h3>
@@ -280,6 +297,8 @@
     else if (a === 'combatSlow') { st.combatSlow=!st.combatSlow;el.classList.toggle('sel',st.combatSlow);el.setAttribute('aria-pressed',String(st.combatSlow)); }
     else if (a === 'skip') { let g = 0; while (!st.match.done && g++ < 6000) st.match.step(1); }
     else if (a === 'order') { const side = st.match.sides[st.meBlue ? 0 : 1]; side.tactics[k] = k === 'obj' ? v : Number(v); document.querySelectorAll(`[data-mact="order"][data-k="${k}"]`).forEach((b) => b.classList.toggle('sel', b.dataset.v === v)); }
+    else if (a === 'next' && st.replay) { stopLoop(); begin(); st.phase = 'live'; V.render(); }
+    else if (a === 'end' && st.replay) V.close();
     else if (a === 'next') { stopLoop();st.phase = 'draft'; st.tac.ban = -1;preparePicks(); V.render(); }
     else if (a === 'end') { st.m.res = st.res; sim.finishSeries(st.m); V.close(); }
   });
