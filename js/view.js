@@ -17,6 +17,8 @@
     st.tac = Object.assign({}, st.me.tactics);
     st.oppTac = sim.aiTactics(st.opp, st.me);
     preparePicks();
+    if (s.mode === 'player') { st.spectate = true; st.tac = sim.aiTactics(st.me, st.opp); }
+    document.getElementById('matchRoot').classList.toggle('spectate', !!st.spectate);
     V.render();
   };
   const myScore = () => st.res.s[st.ua ? 0 : 1], opScore = () => st.res.s[st.ua ? 1 : 0];
@@ -65,7 +67,7 @@
   const stageKo = (m) => ({ reg: `정규 시즌 ${m.round || ''}라운드`, po1: '플레이오프 1라운드', po2: '플레이오프 준결승', final: '결승', playin: '플레이-인', groups: '그룹 스테이지', qf: '8강', sf: '4강', promo: '승강전' }[m.stage] || '');
 
   function begin() {
-    const s = W.get(); s.teams[s.user].tactics = Object.assign({}, st.tac, { ban: -1 });
+    const s = W.get(); if (!st.spectate) s.teams[s.user].tactics = Object.assign({}, st.tac, { ban: -1 });
     st.oppTac = sim.aiTactics(st.opp, st.me);
     const blue = st.meBlue ? st.me : st.opp, red = st.meBlue ? st.opp : st.me;
     st.blue = blue; st.red = red;
@@ -75,6 +77,7 @@
     cfg.sides.forEach((s,si)=>s.players.forEach((p,i)=>p.champion=st.picks[si*5+i]));
     st.particles = []; st.lastFx = 0; st.visualTime = 0; st.cameraTransform=null;st.lastCameraTargets=null;st.lastCombatTime=-Infinity;
     st.match = new L.Match(cfg); st.evShown = 0;
+    if (st.spectate) { const i = st.me.lineup.indexOf(s.me); if (i >= 0) st.selected = (st.meBlue ? 0 : 5) + i; }
   }
   function finishGame() {
     stopLoop();

@@ -4,6 +4,7 @@
   const W = (L.world = {});
   let S = null;
   W.get = () => S; W.set = (s) => { S = s; };
+  W.managed = (tid) => !!S.mgrs && S.mgrs.includes(tid);
 
   const CAL = (W.CAL = { spring: [14, 83], springPO: [88, 93, 99], msi: 110, summer: [140, 209], summerPO: [214, 219, 225], promo: 236, worlds: 245, off: 291, expire: 300, end: 336 });
   W.dateStr = (day, year) => { const d = new Date(year, 0, 8 + day); return `${year}년 ${d.getMonth() + 1}월 ${d.getDate()}일`; };
@@ -130,6 +131,7 @@
       for (let k = 0; k < 2; k++) { const p = W.genPlayer(c.region, k ? 3 : 2, lg.base - 6, 17, lg.base + 14); p.t = 'user'; }
       S.user = 'user';
     } else S.user = opt.teamId;
+    S.mgrs = [S.user];
     for (const lg of Object.values(S.leagues)) for (const tid of lg.teams) {
       const t = S.teams[tid]; W.autoLineup(t);
       t.rep = Math.round(W.teamOvr(t)); t.coach = clamp(Math.round((t.rep - 40) / 3 + R.range(-2, 2)), 4, 19);
@@ -359,7 +361,7 @@
   };
   W.load = function (slot) {
     const s = localStorage.getItem('lfm2_save_' + (slot || 0)); if (!s) return false;
-    S = JSON.parse(s); R = L.rng((Date.now() & 0x7fffffff) || 1); return true;
+    S = JSON.parse(s); if (!S.mgrs) S.mgrs = [S.user]; R = L.rng((Date.now() & 0x7fffffff) || 1); return true;
   };
   W.hasSave = (slot) => { try { return !!localStorage.getItem('lfm2_save_' + (slot || 0)); } catch (e) { return false; } };
   W.pay = function (t, amt, why) { t.money += amt; if (amt >= 0) t.fin.inc += amt; else t.fin.exp -= amt; if (t.id === S.user) { t.fin.log.unshift({ day: S.day, year: S.year, amt, why }); if (t.fin.log.length > 60) t.fin.log.length = 60; } };

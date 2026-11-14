@@ -149,7 +149,7 @@
     for (const lg of Object.values(s.leagues)) {
       const c2 = s.comps[`${lg.id}:summer`], rank = c2 && (c2.rank || c2.seeds);
       for (const tid of lg.teams) {
-        const t = s.teams[tid]; if (tid === s.user) { const c = St.of(t); if (c) t.coach = St.level(c); continue; }
+        const t = s.teams[tid]; if (W.managed(tid)) { const c = St.of(t); if (c) t.coach = St.level(c); continue; }
         const pos = rank ? rank.indexOf(tid) / Math.max(1, rank.length - 1) : 0.5, cur = St.of(t);
         if (!cur || r() < (pos > 0.7 ? 0.4 : 0.08)) {
           const cand = Object.values(s.coaches).filter((c) => !c.t && St.willing(c, t)).sort((a, b) => St.rating(b) - St.rating(a))[0];

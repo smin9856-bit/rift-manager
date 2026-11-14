@@ -18,17 +18,17 @@
       for (const lg of Object.values(s.leagues)) for (const tid of lg.teams) {
         const t = s.teams[tid];
         W.pay(t, -Math.round(M.wages(t) / 48), '선수 주급'); const ch = L.staff.of(t); if (ch) W.pay(t, -Math.round(ch.wage / 48), '감독 주급');
-        if (tid === s.user) L.staff.weeklyIncome(t); else W.pay(t, Math.round(W.sponsor(t) / 48), '');
+        if (W.managed(tid)) L.staff.weeklyIncome(t); else W.pay(t, Math.round(W.sponsor(t) / 48), '');
         if (t.fac > 1) W.pay(t, -Math.round(M.facCost(t.fac) * 0.004), '시설 유지비');
         for (const p of W.roster(tid)) if (!t.lineup.includes(p.id)) p.mor = clamp(p.mor - (L.ovr(p) > W.teamOvr(t) - 3 ? 0.012 : 0.003), 0.05, 1); else p.mor = clamp(p.mor + (0.6 - p.mor) * 0.03, 0.05, 1);
       }
       if (W.windowOpen()) M.offersForUser();
     }
-    L.youth.daily();
+    L.youth.daily(); L.career.daily();
     if (d % 28 === 14) M.progress();
     if ([3, 10, 108, 122, 302, 309, 316, 323, 330].includes(d)) M.aiRound(d >= 300 ? 1 : 0.5);
-    if (d === 250) { const ex = W.roster(s.user).filter((p) => p.cEnd <= s.year); if (ex.length) W.news('계약 만료 예정', `올해로 계약이 끝나는 선수: ${ex.map((p) => p.n).join(', ')}. 재계약하지 않으면 스토브리그에 팀을 떠납니다.`, 'contract'); }
-    if (d === CAL.off) { M.boardReview(); W.news('스토브리그 개막', '시즌이 끝나고 이적 시장이 열렸습니다. 계약 만료 선수는 며칠 뒤 자유계약으로 풀립니다.', 'transfer'); }
+    if (d === 250 && W.managed(s.user)) { const ex = W.roster(s.user).filter((p) => p.cEnd <= s.year); if (ex.length) W.news('계약 만료 예정', `올해로 계약이 끝나는 선수: ${ex.map((p) => p.n).join(', ')}. 재계약하지 않으면 스토브리그에 팀을 떠납니다.`, 'contract'); }
+    if (d === CAL.off) { if (W.managed(s.user)) M.boardReview(); W.news('스토브리그 개막', '시즌이 끝나고 이적 시장이 열렸습니다. 계약 만료 선수는 며칠 뒤 자유계약으로 풀립니다.', 'transfer'); }
     if (d === CAL.expire) M.expire();
     if (d === 104) W.news('시즌 중 이적 시장 개막', '서머 시즌 개막 전까지 선수 영입과 방출이 가능합니다.', 'transfer');
   };
@@ -44,7 +44,7 @@
       if (p.t === 'acad') env = L.youth.env();
       const pickAttr = () => { let x = r() * (tw + (p.tr >= 0 ? w[p.tr] * 3 : 0)); if (p.tr >= 0) { if (x < w[p.tr] * 3) return p.tr; x -= w[p.tr] * 3; } let k = 0; while (k < 9 && x > w[k]) { x -= w[k]; k++; } return k; };
       for (let i = 0; i < 2; i++) {
-        if (gap > 0 && r() < af * (gap / 18) * env) { const k = pickAttr(); if (p.a[k] < 20) p.a[k]++; }
+        if (gap > 0 && r() < af * Math.min(0.5, gap / 18) * env) { const k = pickAttr(); if (p.a[k] < 20) p.a[k]++; }
         if (age >= 26 && r() < (age - 25) * 0.07 * (t ? L.staff.declMul(t) : 1)) { const k = r.pick([0, 1, 5, 2]); if (p.a[k] > 1) p.a[k]--; }
       }
     }
@@ -132,7 +132,7 @@
     for (const id in s.players) {
       const p = s.players[id]; if (!p.t || p.cEnd > s.year) continue;
       const t = s.teams[p.t];
-      if (t.id === s.user) {
+      if (W.managed(t.id)) {
         if (s.auto && s.auto.renew && (t.lineup.includes(id) || (s.year - p.by <= 21 && p.pot >= t.rep)) && M.renew(id, 2).ok) { kept.push(p.n); continue; }
         left.push(p.n); p.t = null; t.lineup = t.lineup.filter((x) => x !== id); continue;
       }
@@ -141,7 +141,8 @@
     }
     if (kept.length) W.news('자동 재계약', `코치진이 다음 선수들과 2년 재계약을 맺었습니다: ${kept.join(', ')}`, 'contract');
     if (left.length) W.news('계약 만료', `계약이 끝난 선수가 팀을 떠났습니다: ${left.join(', ')}`, 'contract');
-    for (const lg of Object.values(s.leagues)) for (const tid of lg.teams) if (tid !== s.user) { W.autoLineup(s.teams[tid]); }
+    for (const lg of Object.values(s.leagues)) for (const tid of lg.teams) if (!W.managed(tid)) { W.autoLineup(s.teams[tid]); }
+    L.career.afterExpire();
   };
 
   // ───────── AI 이적 ─────────
@@ -149,13 +150,13 @@
     const s = S(), ros = W.roster(t.id), lg = s.leagues[t.league];
     for (let role = 0; role < 5; role++) if (!ros.some((p) => p.r === role)) {
       const impN = M.imports(t), fa = Object.values(s.players).filter((p) => !p.t && p.r === role && (!W.isImport(p, t) || impN < 2) && L.ovr(p) <= t.rep + 8).sort((a, b) => L.ovr(b) - L.ovr(a))[0];
-      if (fa && t.id !== s.user && L.ovr(fa) > lg.base - 12) { fa.t = t.id; fa.wage = W.wageAsk(fa); fa.cEnd = s.year + 1; }
-      else { const p = W.genPlayer(t.region, role, lg.base - 5 + R().range(-2, 2), R().int(17, 21), lg.base + 8); p.t = t.id; if (t.id === s.user) W.news(`긴급 콜업: ${p.n}`, `${L.ROLE_KO[role]} 포지션에 뛸 선수가 없어 아카데미의 ${p.n}을(를) 급히 1군으로 올렸습니다.`, 'youth'); }
+      if (fa && !W.managed(t.id) && L.ovr(fa) > lg.base - 12) { fa.t = t.id; fa.wage = W.wageAsk(fa); fa.cEnd = s.year + 1; }
+      else { const p = W.genPlayer(t.region, role, lg.base - 5 + R().range(-2, 2), R().int(17, 21), lg.base + 8); p.t = t.id; if (t.id === s.user && W.managed(t.id)) W.news(`긴급 콜업: ${p.n}`, `${L.ROLE_KO[role]} 포지션에 뛸 선수가 없어 아카데미의 ${p.n}을(를) 급히 1군으로 올렸습니다.`, 'youth'); }
     }
     W.autoLineup(t);
   };
   M.aiRound = function (intensity) {
-    const s = S(), r = R(), teams = r.shuffle(Object.values(s.leagues).flatMap((l) => l.teams).filter((id) => id !== s.user));
+    const s = S(), r = R(), teams = r.shuffle(Object.values(s.leagues).flatMap((l) => l.teams).filter((id) => !W.managed(id)));
     const fa = Object.values(s.players).filter((p) => !p.t);
     const byRole = [0, 1, 2, 3, 4].map((role) => fa.filter((p) => p.r === role).sort((a, b) => L.ovr(b) - L.ovr(a)));
     for (const tid of teams) {
@@ -174,12 +175,12 @@
         const c = cands.sort((a, b) => L.ovr(b) - L.ovr(a)).find((p) => W.value(p) * 1.15 <= t.money * 0.7);
         if (c) {
           const fee = Math.round(W.value(c) * 1.15 / 100) * 100;
-          if (c.t === s.user) { M.addOffer(c, t, fee); }
+          if (c.me) { /* 내 선수는 본인이 결정한다 */ } else if (c.t === s.user && W.managed(c.t)) { M.addOffer(c, t, fee); } else if (W.managed(c.t)) { /* 다른 사람이 운영하는 팀의 선수는 건드리지 않는다 */ }
           else { const sel = s.teams[c.t]; W.pay(t, -fee, ''); W.pay(sel, fee, ''); c.t = tid; c.wage = W.wageAsk(c); c.cEnd = s.year + 2; M.ensureRoles(sel); }
         }
       }
       const ros = W.roster(tid);
-      if (ros.length > 8) { const out = ros.filter((p) => !t.lineup.includes(p.id)).sort((a, b) => L.ovr(a) - L.ovr(b))[0]; if (out) out.t = null; }
+      if (ros.length > 8) { const out = ros.filter((p) => !t.lineup.includes(p.id) && !p.me).sort((a, b) => L.ovr(a) - L.ovr(b))[0]; if (out) out.t = null; }
       W.autoLineup(t);
       if (t.money < 0) t.money = Math.round(t.money * 0.5);
     }
@@ -191,11 +192,11 @@
     W.news(`이적 제안: ${p.n}`, `${from.name}이(가) ${p.n}의 이적료로 ${L.fmtMoney(fee)}을 제안했습니다. 이적 시장 화면에서 수락하거나 거절할 수 있습니다.`, 'transfer');
   };
   M.offersForUser = function () {
-    const s = S(), r = R(), t = s.teams[s.user];
+    const s = S(), r = R(), t = s.teams[s.user]; if (!W.managed(s.user)) return;
     s.offers = (s.offers || []).filter((o) => s.players[o.pid] && s.players[o.pid].t === s.user && (s.year - o.year) * 336 + s.day - o.day < 21);
     for (const p of W.roster(s.user)) {
       if (!p.list && r() > 0.03) continue;
-      const o = L.ovr(p), teams = Object.values(s.leagues).flatMap((l) => l.teams).filter((id) => id !== s.user).map((id) => s.teams[id])
+      const o = L.ovr(p), teams = Object.values(s.leagues).flatMap((l) => l.teams).filter((id) => !W.managed(id)).map((id) => s.teams[id])
         .filter((x) => x.rep >= o - 9 && x.money > W.value(p) * 0.8 && o > L.ovr(M.starter(x, p.r), p.r) + 1 && (!W.isImport(p, x) || M.imports(x) < 2));
       if (!teams.length) continue;
       const from = r.pick(teams); M.addOffer(p, from, Math.round(W.value(p) * r.range(0.8, 1.25) / 100) * 100);
@@ -257,7 +258,7 @@
     // 은퇴
     for (const id of Object.keys(s.players)) {
       const p = s.players[id], age = s.year - p.by;
-      if ((!p.t && ((p.idle || 0) >= 2 || (age >= 27 && r() < 0.5))) || (p.t && p.t !== s.user && age >= 30 && r() < (age - 28) * 0.15 && L.ovr(p) < s.teams[p.t].rep - 4)) {
+      if ((!p.t && ((p.idle || 0) >= 2 || (age >= 27 && r() < 0.5))) || (p.t && !W.managed(p.t) && !p.me && age >= 30 && r() < (age - 28) * 0.15 && L.ovr(p) < s.teams[p.t].rep - 4)) {
         if (p.t) { const t = s.teams[p.t]; t.lineup = t.lineup.filter((x) => x !== id); }
         L.staff.retired(p); delete s.players[id];
       } else if (age > 26 && p.pot > L.ovr(p)) p.pot = Math.max(Math.round(L.ovr(p)), p.pot - 2);
@@ -272,7 +273,7 @@
       // initPlayer 대체
       p.form = 1; p.mor = 0.65; p.st = L.playerStyles(p); p.ss = { g: 0, w: 0, k: 0, d: 0, a: 0, r: 0 }; p.car = []; p.tr = -1; p.list = 0;
       p.h = W.homeOf(p); p.wage = W.wageAsk(p); p.cEnd = s.year + r.int(1, 2);
-      if (t && t.id !== s.user && W.roster(t.id).length < 9 && r() < 0.75) { p.t = t.id; joined++; }
+      if (t && !W.managed(t.id) && W.roster(t.id).length < 9 && r() < 0.75) { p.t = t.id; joined++; }
     }
     // 유스 승격과 팀 정비
     for (const lg of Object.values(s.leagues)) for (const tid of lg.teams) {
@@ -283,7 +284,7 @@
         if (tid === s.user) W.news(`유스 승격: ${p.n}`, `아카데미에서 ${p.n}(${L.ROLE_KO[p.r]}, ${s.year - p.by}세)이(가) 1군에 합류했습니다.`, 'youth');
       }
       t.rep = clamp(t.rep * 0.75 + W.rosterOvr(tid) * 0.25, 30, 99); t.fin.inc = 0; t.fin.exp = 0;
-      if (tid !== s.user) { M.ensureRoles(t); t.tactics.style = W.aiStyle(t); if (t.money < W.sponsor(t) * 0.1) t.money = Math.round(W.sponsor(t) * 0.1); }
+      if (!W.managed(tid)) { M.ensureRoles(t); t.tactics.style = W.aiStyle(t); if (t.money < W.sponsor(t) * 0.1) t.money = Math.round(W.sponsor(t) * 0.1); }
     }
     M.aiRound(1);
     L.staff.rollover(); L.youth.rollover();

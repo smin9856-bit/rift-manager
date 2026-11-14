@@ -30,7 +30,7 @@
     const yb = []; for (let y = 2014; y <= 2026; y++) { const info = G.LFM_YEARS.find((x) => x.year === y); yb.push(`<button class="ybtn ${ng.year === y ? 'sel' : ''}" ${ys.includes(y) ? '' : 'disabled'} data-act="ngyear" data-y="${y}"><b>${y}</b><span>${info ? `${info.leagues}개 리그 · ${info.teams}팀` : '데이터 없음'}</span></button>`); }
     const mode = (k, t, d, off) => `<button class="modecard ${ng.mode === k ? 'sel' : ''}" ${off ? 'disabled' : ''} data-act="ngmode" data-m="${k}"><b>${t}</b><span>${d}</span></button>`;
     $('#app').innerHTML = `<div class="wizard"><h1>새 게임</h1><h3>시작 연도</h3><div class="ygrid">${yb.join('')}</div>
-      <h3>플레이 방식</h3><div class="modes">${mode('team', '기존 팀 선택', '실제 구단의 감독으로 부임합니다. 별이 많을수록 전력이 강한 팀입니다.')}${mode('create', '내 팀 창단', '새 구단을 만들어 2부 리그에서 시작해 정상까지 올라갑니다.')}${mode('player', '선수로 플레이', '준비 중입니다.', 1)}</div>
+      <h3>플레이 방식</h3><div class="modes">${mode('team', '기존 팀 선택', '실제 구단의 감독으로 부임합니다. 별이 많을수록 전력이 강한 팀입니다.')}${mode('create', '내 팀 창단', '새 구단을 만들어 2부 리그에서 시작해 정상까지 올라갑니다.')}${mode('player', '선수로 플레이', '17세 신인 선수로 2부 리그에서 데뷔해 주전 경쟁과 이적을 거쳐 세계 정상에 도전합니다.')}</div>
       <div class="actions"><button class="btn" data-act="boot">뒤로</button><button class="btn primary" data-act="ngnext">다음</button></div></div>`;
   };
   UI.ngStep2 = async function () {
@@ -40,6 +40,7 @@
     const D = G.LFM_DATA[ng.year];
     W.newGame({ year: ng.year, mode: 'team', teamId: D.leagues[0].teams[0], seed: ng.seed });
     if (ng.mode === 'create') return UI.ngCreate();
+    if (ng.mode === 'player') return UI.ngPlayer();
     const s = S(), lgs = Object.values(s.leagues).sort((a, b) => a.tier - b.tier || b.base - a.base);
     if (!ng.lid || !s.leagues[ng.lid]) ng.lid = lgs[0].id;
     const lg = s.leagues[ng.lid], teams = lg.teams.map((id) => s.teams[id]).sort((a, b) => W.teamOvr(b) - W.teamOvr(a));
@@ -52,6 +53,22 @@
       <div class="lgtabs">${[1, 2].map((tier) => `<div><span class="dim">${tier}부</span>${lgs.filter((l) => l.tier === tier).map((l) => `<button class="opt sm ${l.id === ng.lid ? 'sel' : ''}" data-act="nglg" data-id="${l.id}">${esc(l.name)}<small>${W.regionName(l.region)}</small></button>`).join('')}</div>`).join('')}</div>
       <div class="teamgrid">${teams.map(card).join('')}</div>
       <div class="actions"><button class="btn" data-act="ng">뒤로</button><button class="btn primary" ${ng.teamId && s.teams[ng.teamId] ? '' : 'disabled'} data-act="ngstart">이 팀으로 시작</button></div></div>`;
+  };
+  UI.ngPlayer = function () {
+    const s = S(), ng = UI.ng, Cr = L.career, regs = Object.values(s.leagues).filter((l) => l.tier === 1).sort((a, b) => b.base - a.base);
+    const pc = (ng.pc = ng.pc || { name: '', role: 2, type: 'mech', region: 'KR', teamId: null });
+    if (!s.leagues[pc.region + '2']) pc.region = regs[0].region;
+    const lg = s.leagues[pc.region + '2'], teams = lg.teams.map((id) => s.teams[id]).sort((a, b) => b.rep - a.rep);
+    if (!pc.teamId || !lg.teams.includes(pc.teamId)) pc.teamId = teams[teams.length - 1].id;
+    $('#app').innerHTML = `<div class="wizard wide"><h1>${ng.year} 시즌 · 선수 만들기</h1>
+      <div class="grid2"><div><label>선수 이름 (게임 아이디)<input id="pName" maxlength="14" value="${esc(pc.name)}" placeholder="예: Phoenix"></label>
+      <label>포지션<select data-chg="pcrole">${L.ROLE_KO.map((r, i) => `<option value="${i}" ${pc.role === i ? 'selected' : ''}>${r}</option>`).join('')}</select></label>
+      <label>데뷔 지역<select data-chg="pcregion">${regs.map((l) => `<option value="${l.region}" ${pc.region === l.region ? 'selected' : ''}>${W.regionName(l.region)} — ${esc(s.leagues[l.region + '2'].name)}에서 데뷔</option>`).join('')}</select></label>
+      <h3>플레이 성향</h3>${Object.entries(Cr.TYPES).map(([k, t]) => `<button class="stylecard ${pc.type === k ? 'sel' : ''}" data-act="pctype" data-k="${k}" style="width:100%;margin-bottom:6px"><b>${t.ko}</b><span>${t.desc}</span></button>`).join('')}</div>
+      <div><h3 style="margin-top:14px">입단할 팀 <span class="dim sm">${esc(lg.name)} · 17세 신인으로 시작합니다</span></h3>
+      ${teams.map((t) => { const st = s.players[t.lineup[pc.role]]; return `<button class="teamcard ${pc.teamId === t.id ? 'sel' : ''}" data-act="pcteam" data-id="${esc(t.id)}" style="width:100%;margin-bottom:6px"><i class="bar" style="background:${t.color}"></i><b>${esc(t.name)}</b>${starHtml(W.stars(t))}<span class="dim sm">주전 ${L.ROLE_KO[pc.role]}: ${st ? `${esc(st.n)} ${Math.round(L.ovr(st, pc.role))}` : '없음'} · 내 시작 능력 약 ${Math.round(lg.base - 4)}</span></button>`; }).join('')}
+      <p class="dim sm">강한 팀일수록 주전 경쟁이 치열합니다. 약한 팀에서는 바로 뛸 수 있습니다.</p></div></div>
+      <div class="actions"><button class="btn" data-act="ng">뒤로</button><button class="btn primary" data-act="pcstart">데뷔하기</button></div></div>`;
   };
   UI.ngCreate = function () {
     const s = S(), regs = Object.values(s.leagues).filter((l) => l.tier === 1).sort((a, b) => b.base - a.base), c = (UI.ng.create = UI.ng.create || { name: '', short: '', color: '#19c2a0', region: 'KR' });
@@ -66,6 +83,7 @@
 
   // ───────── 메인 화면 틀 ─────────
   const NAV = [['home', '홈'], ['inbox', '알림'], ['squad', '스쿼드'], ['tactics', '전술'], ['training', '훈련'], ['schedule', '일정'], ['league', '리그'], ['world', '국제 대회'], ['transfers', '이적 시장'], ['youth', '유스'], ['staff', '감독'], ['biz', '수익 활동'], ['club', '구단']];
+  const PNAV = [['home', '내 선수'], ['inbox', '알림'], ['pact', '활동'], ['pteam', '우리 팀'], ['poffers', '이적 제안'], ['schedule', '일정'], ['league', '리그'], ['world', '국제 대회']];
   UI.main = function () {
     $('#app').innerHTML = `<div class="top"><div class="club" id="topClub"></div><div class="date" id="topDate"></div><div class="money" id="topMoney"></div>
       <button class="btn" data-act="save">저장</button><button class="btn primary" id="btnCont" data-act="continue">계속 진행</button></div>
@@ -77,11 +95,12 @@
     const s = S(), t = s.teams[s.user], lg = s.leagues[t.league], um = W.userMatchToday();
     $('#topClub').innerHTML = `<i class="crest" style="background:${t.color}">${esc(t.short)}</i><div><b>${esc(t.name)}</b><span>${esc(lg.name)} · ${W.regionName(lg.region)}</span></div>`;
     $('#topDate').innerHTML = `<b>${W.dateStr(s.day, s.year)}</b><span>${phase(s.day)}${W.windowOpen() ? ' · 이적 시장 열림' : ''}</span>`;
-    $('#topMoney').innerHTML = `<span>자금</span><b class="${t.money < 0 ? 'bad' : ''}">${money(t.money)}</b>`;
+    $('#topMoney').innerHTML = s.mode === 'player' ? `<span>내 자산</span><b>${money(s.cash)}</b>` : `<span>자금</span><b class="${t.money < 0 ? 'bad' : ''}">${money(t.money)}</b>`;
     $('#btnCont').textContent = um ? '경기 준비' : '계속 진행';
     const unread = s.news.filter((n) => !n.read).length;
-    $('#nav').innerHTML = NAV.map(([k, label]) => `<button class="${UI.screen === k ? 'sel' : ''}" data-act="go" data-s="${k}">${label}${k === 'inbox' && unread ? `<em>${unread}</em>` : ''}${k === 'transfers' && (s.offers || []).length ? `<em>${s.offers.length}</em>` : ''}</button>`).join('');
-    $('#main').innerHTML = SCREENS[UI.screen]();
+    const pm = s.mode === 'player';
+    $('#nav').innerHTML = (pm ? PNAV : NAV).map(([k, label]) => `<button class="${UI.screen === k ? 'sel' : ''}" data-act="go" data-s="${k}">${label}${k === 'inbox' && unread ? `<em>${unread}</em>` : ''}${k === 'transfers' && (s.offers || []).length ? `<em>${s.offers.length}</em>` : ''}${k === 'poffers' && (s.poffers || []).length ? `<em>${s.poffers.length}</em>` : ''}</button>`).join('');
+    $('#main').innerHTML = SCREENS[pm && UI.screen === 'home' ? 'phome' : UI.screen]();
   };
 
   const table = (head, rows, cls) => `<table class="tb ${cls || ''}"><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
@@ -250,6 +269,38 @@
           <p class="dim sm">이 밖에 경기마다 입장 수익(이번 경기 약 ${money(St.ticket(t))}, 플레이오프·국제전은 2배), 대회 상금, 목표 달성 보너스, 선수 이적료가 들어옵니다.</p></section>
         <section class="card"><h3>수익을 늘리는 방법</h3><ul class="tips"><li>많이 이길 자신이 있으면 <b>성과형</b>, 목표를 확실히 넘길 수 있으면 <b>도전형</b> 계약이 유리합니다.</li><li>우승과 국제전 성적은 상금과 팬 수를 함께 올립니다.</li><li>키운 유망주를 이적 시장에서 팔면 큰 수입이 됩니다.</li><li>후보 선수를 정리하면 인건비가 줄어듭니다.</li></ul></section></div></div>`;
     },
+    phome() {
+      const s = S(), Cr = L.career, me = Cr.me(), t = s.teams[s.user], lg = s.leagues[t.league], nm = W.nextUserMatch(), c = userComp(), o = L.ovr(me), rv = Cr.rival(), starter = Cr.isStarter(), ss = Cr.season(), sk = L.skillOf(me);
+      const attr = L.ATTRS.map((k, i) => `<div class="attr" title="${L.ATTR_DESC[i]}"><span>${L.ATTR_KO[i]}</span><b class="${ac(me.a[i])}">${me.a[i]}</b><i><u style="width:${me.a[i] * 5}%"></u></i></div>`).join('');
+      let next = '<p class="dim">예정된 경기가 없습니다.</p>';
+      if (nm) { const op = s.teams[nm.a === s.user ? nm.b : nm.a], cc = s.comps[nm.comp]; next = `<div class="nextm"><div><span class="dim">${W.shortDate(nm.day, s.year)} · ${esc(cc.name)}</span><h2>vs ${esc(op.name)}</h2>${starHtml(W.stars(op))}</div>${nm.day === s.day ? '<button class="btn primary" data-act="continue">경기장으로</button>' : `<span class="dim">${nm.day - s.day}일 뒤</span>`}</div>`; }
+      return `<div class="grid2"><section class="card"><div class="coachhead"><div><h2>${esc(me.n)} <span class="rolechip">${L.ROLE_KO[me.r]}</span></h2><span class="dim">${s.year - me.by}세 · ${tm(t)} · ${esc(lg.name)} · 연봉 ${money(me.wage)} · ${me.cEnd}년까지</span></div><div class="big ${oc(o)}">${Math.round(o)}<small>종합</small></div></div>
+          <p class="skillline"><b>고유 스킬 · ${esc(sk[0])}</b> <span class="dim">${L.skillDesc(sk)}</span></p><p class="oneline">${summary(me)}</p><div class="attrs">${attr}</div>
+          <div class="kv k4"><span>팀 내 입지</span><b class="${starter ? 'good' : 'bad'}">${starter ? '주전' : '후보'}</b><span>경쟁자</span><b>${rv ? `${pl(rv)} ${Math.round(L.ovr(rv))}` : '없음'}</b><span>컨디션</span><b>${bar(((me.form - 0.9) / 0.2) * 100)}</b><span>사기</span><b>${bar(me.mor * 100)}</b>
+            <span>올 시즌</span><b>${ss ? `${ss.g}경기 ${ss.w}승 · ${ss.kda}` : '출전 없음'}</b><span>평균 평점</span><b>${ss ? ss.r : '-'}</b><span>이번 주 활동</span><b>${Cr.ACTS[s.act].ko}</b><span>잠재력</span><b>${potStars(me)}</b></div>
+          ${starter ? '' : '<p class="dim sm">주전이 되려면 경쟁자보다 종합 능력이 높아야 합니다. 감독은 포지션별로 가장 강한 선수를 내보냅니다. 더 약한 팀으로 옮기면 바로 주전으로 뛸 수도 있습니다.</p>'}</section>
+        <div><section class="card"><h3>다음 경기</h3>${next}</section>
+        <section class="card"><h3>${esc(c.name)} 순위</h3>${standings(c, W.compMatches(c.id, 'reg'), c.teams)}</section></div>
+        <section class="card"><h3>경력</h3>${me.car.length ? table(['연도', '팀', '경기', '승', 'K/D/A', '평점', '종합'], me.car.slice().reverse().map((x) => `<tr><td>${x.y}</td><td>${esc(x.t)}</td><td>${x.g}</td><td>${x.w}</td><td>${x.k}/${x.d}/${x.a}</td><td>${x.r}</td><td>${x.o}</td></tr>`)) : '<p class="dim">첫 시즌입니다.</p>'}</section>
+        <section class="card"><h3>최근 소식</h3>${s.news.slice(0, 6).map((n) => `<div class="newsline ${n.read ? '' : 'unread'}" data-act="go" data-s="inbox"><span class="dim">${W.shortDate(n.day, n.year)}</span> ${esc(n.title)}</div>`).join('')}</section></div>`;
+    },
+    pact() {
+      const s = S(), Cr = L.career, me = Cr.me();
+      return `<h2>활동</h2><p class="dim">매주 한 가지에 집중합니다. 고른 활동은 바꿀 때까지 계속 적용됩니다. 어릴수록, 잠재력(${potStars(me)})과의 격차가 클수록 잘 오릅니다. 팀 훈련으로 얻는 기본 성장은 이것과 별개로 매달 일어납니다.</p>
+        <section class="card">${Object.entries(Cr.ACTS).map(([k, a]) => `<div class="deal ${s.act === k ? 'sel' : ''}"><div><b>${a.ko}</b><span class="dim">${a.desc}</span></div>${s.act === k ? '<span class="good">진행 중</span>' : `<button class="btn sm primary" data-act="pact" data-k="${k}">이걸로</button>`}</div>`).join('')}</section>`;
+    },
+    pteam() {
+      const s = S(), t = s.teams[s.user], St = L.staff, c = St.of(t), ros = W.roster(t.id).sort((a, b) => a.r - b.r || L.ovr(b) - L.ovr(a)); sim.lineup(t);
+      return `<h2>우리 팀</h2><section class="card"><div class="kv k4"><span>팀</span><b>${tm(t)}</b><span>전력</span><b>${starHtml(W.stars(t))} ${Math.round(W.teamOvr(t))}</b><span>감독</span><b>${c ? `${esc(c.n)} (${St.TRAITS[c.trait].ko})` : '-'}</b><span>조합 성향</span><b>${L.STYLES[t.tactics.style].ko}</b></div></section>
+        <section class="card">${table(['', '이름', '나이', '국적', '종합', '잠재력', '경기', 'K/D/A', '평점', ''], ros.map((p) => `<tr class="${p.id === s.me ? 'me' : ''}"><td><span class="rolechip">${L.ROLE_KO[p.r]}</span></td><td>${pl(p)}${p.id === s.me ? '<small class="tagc">나</small>' : ''}</td><td>${s.year - p.by}</td><td>${ctry(p.c)}</td><td class="${oc(L.ovr(p))}"><b>${Math.round(L.ovr(p))}</b></td><td>${potStars(p)}</td><td>${p.ss.g}</td><td>${p.ss.k}/${p.ss.d}/${p.ss.a}</td><td>${p.ss.g ? (p.ss.r / p.ss.g).toFixed(2) : '-'}</td><td>${t.lineup.includes(p.id) ? '<small class="tagc">주전</small>' : ''}</td></tr>`))}</section>`;
+    },
+    poffers() {
+      const s = S(), Cr = L.career, me = Cr.me(), open = W.windowOpen();
+      const rows = s.poffers.map((o, i) => { const t = s.teams[o.tid], st = s.players[t.lineup[me.r]]; return `<div class="reco"><div><b>${tm(t)}</b> ${starHtml(W.stars(t))} <span class="dim">${esc(s.leagues[t.league].name)}</span><br><span>연봉 <b>${money(o.wage)}</b> · ${o.years}년 계약 <span class="dim">(현재 ${money(me.wage)})</span></span><br><span class="dim sm">그 팀의 현재 ${L.ROLE_KO[me.r]}: ${st ? `${esc(st.n)} ${Math.round(L.ovr(st))}` : '없음'} — 내 종합 ${Math.round(L.ovr(me))}</span></div><div><button class="btn sm primary" data-act="paccept" data-i="${i}" ${open ? '' : 'disabled'}>이적</button> <button class="btn sm" data-act="pdecline" data-i="${i}">거절</button></div></div>`; }).join('');
+      return `<h2>이적 제안</h2><div class="banner ${open ? 'open' : ''}"><b>${open ? '이적 시장이 열려 있습니다' : '지금은 이적 시장이 닫혀 있습니다'}</b><span>${open ? '제안을 수락하면 바로 팀을 옮깁니다.' : '제안은 시즌이 끝난 뒤(11~1월)와 스프링·서머 사이(5월)에 들어옵니다.'}</span><span>내 자산 <b>${money(s.cash)}</b></span></div>
+        <section class="card"><h3>받은 제안</h3>${rows || '<p class="dim">지금은 제안이 없습니다. 좋은 평점을 쌓고 능력치를 올리면 더 큰 팀이 찾아옵니다.</p>'}</section>
+        <section class="card"><div class="upg"><div><b>이적 요청</b><span class="dim">팀에 이적을 요청합니다. 주전이 아니어도 나를 쓰려는 팀들의 제안이 더 많이 들어옵니다.</span></div><button class="btn sm" data-act="plist">${me.list ? '요청 취소' : '이적 요청하기'}</button></div></section>`;
+    },
     club() {
       const s = S(), t = s.teams[s.user], g = t.goalNow || W.goal(t);
       const up = (kind, name, desc) => `<div class="upg"><div><b>${name} ${t[kind]}단계</b><span class="dim">${desc}</span></div>${t[kind] >= 5 ? '<span class="dim">최고 등급</span>' : `<button class="btn sm" data-act="upgrade" data-k="${kind}">확장 (${money(M.facCost(t[kind]))})</button>`}</div>`;
@@ -301,7 +352,8 @@
     const s = S(), p = s.players[id]; if (!p) return; const t = p.t ? s.teams[p.t] : null, ut = s.teams[s.user], mine = p.t === s.user, o = L.ovr(p);
     const attr = L.ATTRS.map((k, i) => `<div class="attr" title="${L.ATTR_DESC[i]}"><span>${L.ATTR_KO[i]}</span><b class="${ac(p.a[i])}">${p.a[i]}</b><i><u style="width:${p.a[i] * 5}%"></u></i></div>`).join('');
     let act = '';
-    if (mine) act = `<button class="btn sm" data-act="renew" data-id="${esc(id)}" data-y="1">1년 재계약</button><button class="btn sm" data-act="renew" data-id="${esc(id)}" data-y="2">2년 재계약</button><button class="btn sm" data-act="renew" data-id="${esc(id)}" data-y="3">3년 재계약</button>
+    if (s.mode === 'player') act = id === s.me ? '<span class="dim">내 선수입니다.</span>' : '';
+    else if (mine) act = `<button class="btn sm" data-act="renew" data-id="${esc(id)}" data-y="1">1년 재계약</button><button class="btn sm" data-act="renew" data-id="${esc(id)}" data-y="2">2년 재계약</button><button class="btn sm" data-act="renew" data-id="${esc(id)}" data-y="3">3년 재계약</button>
       <button class="btn sm" data-act="list" data-id="${esc(id)}">${p.list ? '판매 등록 취소' : '판매 등록'}</button><button class="btn sm danger" data-act="release" data-id="${esc(id)}">방출</button>`;
     else if (p.t === 'acad') act = `<button class="btn sm primary" data-act="ypromote" data-id="${esc(id)}">1군 승격</button>`;
     else if (p.t === 'scout') act = `<button class="btn sm primary" data-act="ysign" data-id="${esc(id)}">아카데미 입단</button>`;
@@ -333,6 +385,11 @@
   const sleep = () => new Promise((r) => setTimeout(r, 0));
   UI.openMatch = function (m) {
     const s = S(), t = s.teams[s.user]; sim.lineup(t);
+    if (s.mode === 'player') {
+      W.autoLineup(t);
+      if (!t.lineup.includes(s.me)) { sim.playSeries(m, false); const mine = m.a === s.user ? 0 : 1, won = m.res.s[mine] > m.res.s[1 - mine]; toast(`벤치에서 지켜봤습니다. 팀은 ${won ? '이겼습니다' : '졌습니다'} (${m.res.s[mine]}:${m.res.s[1 - mine]}).`); W.advance(); UI.go('home'); return; }
+      V.open(m, async () => { busy = true; W.advance(); busy = false; try { W.save(0); } catch (e) { /* 무시 */ } UI.go('home'); }); return;
+    }
     if (s.auto && s.auto.lineup) W.autoLineup(t);
     if (t.lineup.filter((id) => W.isImport(s.players[id], t)).length > 2) { toast('선발 명단에 용병이 2명을 넘습니다. 스쿼드에서 조정하세요.', 1); UI.go('squad'); return; }
     V.open(m, async () => { busy = true; W.advance(); busy = false; try { W.save(0); } catch (e) { /* 저장 실패는 무시 */ } UI.go('home'); });
@@ -387,6 +444,10 @@
     ysign: (d) => { const r = L.youth.sign(d.id); toast(r.msg, !r.ok); UI.render(); },
     ypromote: (d) => { const r = L.youth.promote(d.id); toast(r.msg, !r.ok); UI.render(); },
     ydrop: (d) => { L.youth.drop(d.id); UI.render(); }, goyouth: () => UI.go('youth'),
+    pctype: (d) => { UI.ng.pc.name = $('#pName').value; UI.ng.pc.type = d.k; UI.ngPlayer(); }, pcteam: (d) => { UI.ng.pc.name = $('#pName').value; UI.ng.pc.teamId = d.id; UI.ngPlayer(); },
+    pcstart: () => { const pc = UI.ng.pc; pc.name = $('#pName').value.trim(); if (pc.name.length < 2) return toast('선수 이름을 2자 이상 입력하세요.', 1); W.newGame({ year: UI.ng.year, mode: 'team', teamId: pc.teamId, seed: UI.ng.seed }); L.career.start(pc); UI.main(); },
+    pact: (d) => { S().act = d.k; UI.render(); }, paccept: (d) => { const r = L.career.accept(Number(d.i)); toast(r.msg, !r.ok); UI.go(r.ok ? 'home' : 'poffers'); }, pdecline: (d) => { S().poffers.splice(Number(d.i), 1); UI.render(); },
+    plist: () => { const me = L.career.me(); me.list = me.list ? 0 : 1; UI.render(); },
     hirecoach: (d) => { const r = L.staff.hire(d.id); toast(r.msg, !r.ok); UI.render(); },
     deal: (d) => { const r = L.staff.pickDeal(Number(d.i)); toast(r.msg, !r.ok); UI.render(); },
     fanevent: () => { const r = L.staff.fanEvent(); toast(r.msg, !r.ok); UI.render(); }, gobiz: () => UI.go('biz'),
@@ -399,6 +460,7 @@
   });
   document.addEventListener('change', (e) => {
     const el = e.target, k = el.dataset && el.dataset.chg; if (!k) return; const s = S(), f = UI.tf;
+    if (k === 'pcrole' || k === 'pcregion') { const pc = UI.ng.pc; pc.name = $('#pName').value; if (k === 'pcrole') pc.role = Number(el.value); else { pc.region = el.value; pc.teamId = null; } return UI.ngPlayer(); }
     if (k === 'lineup') { const t = s.teams[s.user], i = Number(el.dataset.i), j = t.lineup.indexOf(el.value); if (j >= 0 && j !== i) t.lineup[j] = t.lineup[i]; t.lineup[i] = el.value; }
     else if (k === 'content') s.teams[s.user].content = el.checked ? 1 : 0;
     else if (k === 'auto') { s.auto = s.auto || {}; s.auto[el.dataset.k] = el.checked ? 1 : 0; }
