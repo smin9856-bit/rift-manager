@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>경기 중계 미리보기 · Rift Manager</title><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/broadcast.css"></head>
+<body>
+<div id="matchRoot"></div>
+<script src="data/index.js"></script><script src="data/y2026.js"></script><script src="data/rookies.js"></script><script src="js/core.js"></script><script src="data/champions.js"></script><script src="js/champions.js"></script><script src="js/engine.js"></script><script src="js/world.js"></script><script src="js/sim.js"></script><script src="js/broadcast.js"></script><script src="js/combat-vfx.js"></script><script src="js/view.js"></script>
+<script>
+// Standalone in-memory exhibition. Never loads or writes a saved career.
+const D=LFM_DATA[2026],S=LFM.world.newGame({year:2026,mode:'team',teamId:D.leagues[0].teams[0],seed:77});
+const fixture=S.matches.find(m=>m.a===S.user||m.b===S.user);
+LFM.view.open(fixture,()=>location.href='index.html');
+const state=LFM.view.state();
+state.picks=['Gnar','LeeSin','Ahri','Jinx','Thresh','Renekton','Elise','Orianna','Ashe','Nautilus'];
+document.querySelector('[data-mact="start"]').click();
+while(state.match.t<1080&&!state.match.done)state.match.step(1);
+state.speed=2;
+LFM.view.render();
+const meta=document.querySelector('.match-meta');meta.textContent='데모 경기 · 18분부터 재생 · 저장 데이터에 영향 없음';
+</script>
+</body></html>

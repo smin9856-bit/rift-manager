@@ -1,0 +1,6 @@
+node_modules/
+tools/cache/
+tools/browser-test/
+tools/test-output/
+선수명단.csv
+.claude/
