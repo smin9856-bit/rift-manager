@@ -13,10 +13,11 @@ await page.evaluate(()=>{
   const m=S.matches.find(m=>m.a===S.user||m.b===S.user);
   L.view.open(m,()=>{});
 });
-assert.equal(await page.locator('[data-pick]').count(),10);
-assert.equal(await page.locator('[data-pick]:enabled').count(),5);
-const picks=await page.locator('[data-pick]').evaluateAll(es=>es.map(e=>e.value));assert.equal(new Set(picks).size,10);
-const selectable=page.locator('[data-pick]:enabled').first();const next=await selectable.locator('option:not([disabled]):not([selected])').first().getAttribute('value');await selectable.selectOption(next);
+assert.equal(await page.locator('.draft-slot').count(),10);
+await page.locator('[data-draft-pick]:enabled').first().click();await page.locator('[data-draft-action="lock"]').click();
+await page.locator('[data-draft-action="auto"]').click();
+const picks=await page.evaluate(()=>LFM.view.state().picks);assert.equal(new Set(picks).size,10);
+await page.screenshot({path:'tools/test-output/draft-desktop.png',fullPage:true});
 await page.getByRole('button',{name:'경기 시작',exact:true}).click();
 await page.locator('[data-mact="speed"][data-v="0"]').click();
 await page.evaluate(()=>{const s=LFM.view.state();for(let i=0;i<960;i++)s.match.step(1);});
@@ -45,7 +46,8 @@ await page.locator('.result').waitFor();
 assert.equal(await page.locator('.result .tb tbody tr').count(),12);
 assert.equal(await page.locator('.result-portrait').count(),10);
 if(await page.locator('[data-mact="next"]').count()) {
-  await page.locator('[data-mact="next"]').click();assert.equal(await page.locator('[data-pick]').count(),10);
+  await page.locator('[data-mact="next"]').click();assert.equal(await page.locator('.draft-slot').count(),10);
+  await page.locator('[data-draft-action="auto"]').click();
   await page.locator('[data-mact="instant"]').click();await page.locator('.result').waitFor();
 }
 await page.goto('http://127.0.0.1:8765/match-preview.html');await page.waitForTimeout(1000);

@@ -30,7 +30,7 @@ await save(`${cdn}/img/map/map11.png`, 'assets/maps/map11.png');
 await pool(all, async c => {
   const detail = (await (await get(`${cdn}/data/ko_KR/champion/${c.id}.json`)).json()).data[c.id];
   await save(`${cdn}/img/champion/${c.image.full}`, `assets/champions/${c.id}.png`);
-  const spells = detail.spells.map(s => ({ name:s.name, icon:s.image.full, cooldown:s.cooldown, range:s.range }));
+  const spells = detail.spells.map(s => ({ name:s.name, icon:s.image.full, cooldown:s.cooldown, range:s.range, description:s.description, tooltip:s.tooltip, cost:s.cost }));
   await pool(spells, s => save(`${cdn}/img/spell/${s.icon}`, `assets/spells/${s.icon}`), 2);
   await save(`${cdn}/img/passive/${detail.passive.image.full}`, `assets/passive/${detail.passive.image.full}`);
   champions[c.id] = { id:c.id, key:c.key, name:c.name, title:c.title, tags:c.tags, range:c.stats.attackrange, year:release[c.id] || 2026, spells, passive:{name:detail.passive.name, icon:detail.passive.image.full} };

@@ -86,9 +86,10 @@
     while (m.res.s[0] < need && m.res.s[1] < need) {
       const blue = aBlue ? a : b, red = aBlue ? b : a, cfg = sim.cfg(blue, red, m, tacOf(blue, red), tacOf(red, blue));
       cfg.sides[0].color = '#3b9eff'; cfg.sides[1].color = '#ff5a5f'; cfg.visuals = true;
-      const picks = L.champions ? L.champions.draft([...sim.lineup(blue), ...sim.lineup(red)], s.year, `${m.id}:${games.length}`) : [];
-      cfg.sides.forEach((sd, si) => sd.players.forEach((p, i) => (p.champion = picks[si * 5 + i] || null)));
+      const draft=L.competition.draft([blue,red],m,cfg.sides.map(s=>s.tactics),m.res.g,m.id+':'+games.length);
+      L.competition.decorate(cfg,[blue,red],draft.picks);
       const copy = JSON.parse(JSON.stringify(cfg)), res = L.simulate(cfg);
+      res.draft=[{team:blue.id,picks:draft.picks.slice(0,5)},{team:red.id,picks:draft.picks.slice(5)}];res.bans=draft.bans;
       sim.record(m, res, aBlue); sim.apply(blue, red, res);
       games.push({ cfg: copy, blue: blue.id, red: red.id });
       aBlue = (res.winner === 0) === aBlue ? !aBlue : aBlue;

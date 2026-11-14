@@ -1,22 +1,33 @@
-# Match center assets and implementation
+# Assets and simulation scope
 
-- Riot Data Dragon patch **16.22.1**: 173 champion portraits, 692 Q/W/E/R icons, 173 passive icons, and Summoner's Rift overview map. Stored locally in `assets/`; no runtime CDN dependency or API key.
-- Source and URL format: https://developer.riotgames.com/docs/lol#data-dragon
-- Reimport with `node tools/fetch_assets.mjs`. Champion availability by season is based on each year's final Data Dragon champion catalog. Artwork and spell metadata use the pinned current patch, not historical patch balance.
-- League of Legends artwork belongs to Riot Games. Rift Manager is not endorsed by Riot Games and does not reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
+Riot Data Dragon **16.22.1** provides 173 champion portraits, 692 Q/W/E/R icons, 173 passive icons and the overview map in `assets/`. Korean spell descriptions, ranges, cooldowns and costs are bundled in `data/champions.js`. Reimport with `node tools/fetch_assets.mjs`.
 
-## Effects and simulation scope
+Source: [Riot Data Dragon documentation](https://developer.riotgames.com/docs/lol#data-dragon).
 
-`js/broadcast.js` implements original Canvas projectile, slash, ring, impact, damage-number, recall and teleport animations, with champion-themed beam/orb/hook/volley/fire/wind/rocket variants. These are **not extracted League client particle animations**. Public CommunityDragon extraction hosting returned HTTP 522 during implementation; no original particle bundle is included.
+The starting pool contains champions available by the end of 2014. Later champions unlock at the start of their release year using annual Data Dragon catalogs. 2014 is a baseline, not every older champion’s original release year. All historical seasons use the pinned current artwork and ability metadata; historical reworks are not reproduced.
 
-Real Riot spell icons accompany casts. Q/W/E/R cooldowns use Data Dragon values with simplified rank progression and minimum cooldowns (4 seconds for basic spells, 30 for ultimates); R unlocks at level 6. Champion identity and casts provide presentation over the existing management simulation damage model, not a recreation of all 173 champions' combat mechanics, hitboxes, mana, items, crowd control or live patch balance. Champion selection does not modify the original player ability / team tactic damage model.
+## Mechanics and VFX
 
-Combat particles originate from engine damage events; farming, camp clears and objective/structure attacks have their own visual events. Presentation uses its own clock, does not consume simulation randomness, pauses with playback, and caps retained particles. Overlapping portraits are spread visually without moving simulated units. Match speed labels now represent real game-seconds per real second.
+The simulation runs at fixed 20 Hz. Unit separation, walls, teleport landing, projectile windup and swept collisions operate in actual world coordinates. Aimed projectiles can miss; damage applies on impact. Effects use the simulation clock and do not consume RNG.
+
+`js/abilities.js` supplies explicit Q/W/E/R behavior profiles for **all 173 champions** (692 slots), based on their public descriptions. It separates aimed and targeted attacks, returning and penetrating projectiles, cones, beams, areas, persistent zones, dashes, pulls, knockback, charm, root, airborne effects, slows, silence, shields, heals and defensive effects. Yasuo R requires an airborne target. Champion identity, mastery and composition change combat.
+
+These are **simplified web simulation mechanics**. Damage uses the management game's player/gold/level model. These profiles reuse common behavior primitives; listing a profile does not mean every unique interaction is faithfully reproduced. Some unique mechanics share common behaviors. Transformations, clones, summons, items, mana costs, exact rank allocation and historical reworks are not fully simulated. Public spell ranges are scaled by 0.25 and bounded to 60–1600 map units. Data Dragon special ranges are not an exact runtime specification.
+
+`js/combat-vfx.js` renders distinct hearts, chains, arrows, orbs, beams, waves, zones, dash trails, shields, healing and status labels. **They are reconstructed Canvas animations, not original League client particle files.** No native Riot particle bundle is included. Public extraction endpoints were unavailable. Real icons and the handbook's official Riot reference videos should not be confused with original in-world VFX. Reference videos need internet access and show a fallback when unavailable.
+
+The renderer is read-only. Effect toggles and playback speed do not change outcomes. Automatic combat zoom and optional 1× combat playback improve readability.
+
+League of Legends artwork belongs to Riot Games. Rift Manager is not endorsed by Riot Games and does not reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games and associated properties are trademarks or registered trademarks of Riot Games, Inc.
 
 ## Run and verify
 
-Open `index.html` normally, or run `node tools/serve.mjs` and visit http://127.0.0.1:8765. `match-preview.html` provides an exhibition starting at 18:00 in memory without reading or writing a career save.
+Open `index.html`, or run `node tools/serve.mjs` and visit http://127.0.0.1:8765. `match-preview.html` starts an in-memory exhibition around 18:00 without touching career saves.
 
-- `node tools/sim_test.mjs 30`: existing simulation smoke check.
-- `node tools/champion_test.mjs`: local assets, historical pools, cooldowns, visual event bounds and deterministic outcome checks.
-- Browser checks: `npm install --prefix tools/browser-test --no-package-lock --no-save playwright`, start the local server, then `node tools/broadcast_test.mjs` (uses installed Microsoft Edge). Screenshots go to `tools/test-output/`.
+- `node tools/physics_test.mjs`: body/wall collisions, swept hits, windup cancellation, respawn isolation, timestep batching.
+- `node tools/physics_abilities_test.mjs`: dashes, CC displacement, terrain, separation and batching.
+- `node tools/abilities_test.mjs`: charm, pulls, dashes, airborne, shields, heals, skillshot misses and return projectiles.
+- `node tools/champion_test.mjs`: 1,038 PNGs, yearly pools, effect bounds and eight deterministic visual/nonvisual match pairs.
+- `node tools/features_test.mjs`: drafts, mastery, management, save/load and rollover.
+- `node tools/fullseason_features_test.mjs`: full-season automatic progression.
+- `node tools/broadcast_test.mjs` and `node tools/features_browser_test.mjs`: Edge interaction and desktop/mobile screenshots. Install their optional dependency with `npm install --prefix tools/browser-test --no-package-lock --no-save playwright`; start the local server first.

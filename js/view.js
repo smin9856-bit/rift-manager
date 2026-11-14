@@ -16,54 +16,25 @@
     st.effects = !G.matchMedia('(prefers-reduced-motion: reduce)').matches;
     st.tac = Object.assign({}, st.me.tactics);
     st.oppTac = sim.aiTactics(st.opp, st.me);
-    preparePicks();
     if (s.mode === 'player') { st.spectate = true; st.tac = sim.aiTactics(st.me, st.opp); }
+    preparePicks();
     document.getElementById('matchRoot').classList.toggle('spectate', !!st.spectate);
     V.render();
   };
   const myScore = () => st.res.s[st.ua ? 0 : 1], opScore = () => st.res.s[st.ua ? 1 : 0];
   function preparePicks() {
-    const teams = st.meBlue ? [st.me, st.opp] : [st.opp, st.me];
-    st.picks = C.draft(teams.flatMap(t => sim.lineup(t)), W.get().year, `${st.m.id || st.m.a}:${st.res.g.length}`);
+    L.draftUI.init(st);
   }
 
   V.render = function () {
     const root = document.getElementById('matchRoot'); root.classList.add('on');
-    if (st.phase === 'draft') root.innerHTML = draftHtml();
+    if (st.phase === 'draft') root.innerHTML = L.draftUI.html(st);
     else if (st.phase === 'live') { root.innerHTML = liveHtml(); startLive(); }
     else root.innerHTML = resultHtml();
   };
   V.close = function () { stopLoop(); const cb = st.onDone; st = null; const root = document.getElementById('matchRoot'); root.classList.remove('on'); root.innerHTML = ''; cb && cb(); };
 
   // ───────── 밴픽 ─────────
-  function lineupCol(t, side) {
-    const lu = sim.lineup(t), offset = side === 'blue' ? 0 : 5;
-    return `<div class="lu ${side}"><h3 style="border-color:${side === 'blue' ? BLUE : RED}">${esc(t.name)} <span class="dim">${side === 'blue' ? '블루' : '레드'} 진영</span></h3>` +
-      lu.map((p, i) => `<div class="lurow"><img class="draft-portrait" src="${C.icon(st.picks[offset+i])}" alt="${esc(C.get(st.picks[offset+i])?.name || '')}"><span class="rolechip">${L.ROLE_KO[i]}</span><b>${esc(p.n)}</b><span class="ovr">${Math.round(L.ovr(p, i))}</span>
-        <label class="pick-label"><select data-pick="${offset+i}" aria-label="${esc(p.n)} 챔피언" ${t.id !== st.me.id ? 'disabled' : ''}>${C.available(W.get().year).sort((a,b)=>a.name.localeCompare(b.name,'ko')).map(ch=>`<option value="${ch.id}" ${ch.id===st.picks[offset+i]?'selected':''} ${st.picks.includes(ch.id)&&ch.id!==st.picks[offset+i]?'disabled':''}>${C.pool(i,W.get().year).includes(ch.id)?'★ ':''}${esc(ch.name)}</option>`).join('')}</select></label></div>`).join('') +
-      `<div class="dim sm">팀 호흡 ${Math.round(sim.synergy(t) * 100)} · 감독 ${L.staff.of(t) ? esc(L.staff.of(t).n) + ' (' + L.staff.TRAITS[L.staff.of(t).trait].ko + ')' : '-'}</div></div>`;
-  }
-  function draftHtml() {
-    const s = W.get(), c = s.comps[st.m.comp], lu = sim.lineup(st.me), olu = sim.lineup(st.opp), tac = st.tac;
-    const opt = (key, val, label, extra) => `<button class="opt ${tac[key] === val ? 'sel' : ''}" data-mact="tac" data-k="${key}" data-v="${val}">${label}${extra || ''}</button>`;
-    const blueT = st.meBlue ? st.me : st.opp, redT = st.meBlue ? st.opp : st.me;
-    return `<div class="draft">
-      <div class="mhead"><div><b>${esc(c ? c.name : '')}</b> <span class="dim">${stageKo(st.m)} · ${st.m.bo}전 ${st.need}선승 · ${st.res.g.length + 1}세트</span></div>
-        <div class="score">${esc(st.me.short)} <b>${myScore()}</b> : <b>${opScore()}</b> ${esc(st.opp.short)}</div></div>
-      <p class="draft-hint">CHAMPION SELECT <span>선수별 챔피언을 선택하세요. ★는 포지션 추천 · 해당 시즌에 출시된 챔피언만 표시됩니다.</span></p>
-      <div class="lus">${lineupCol(blueT, 'blue')}${lineupCol(redT, 'red')}</div>
-      <div class="panel"><h4>조합 성향 <span class="dim">상대의 평소 성향: ${L.STYLES[st.opp.tactics.style].ko}</span></h4><div class="styles">` +
-      L.STYLE_KEYS.map((k) => {
-        const n = lu.filter((p) => p.st.includes(k)).length, cv = L.COUNTER[k][st.opp.tactics.style];
-        return `<button class="stylecard ${tac.style === k ? 'sel' : ''}" data-mact="tac" data-k="style" data-v="${k}"><b>${L.STYLES[k].ko}</b><span>${L.STYLES[k].desc}</span>
-          <em>숙련 선수 ${n}명${cv > 0 ? ' · <u class="good">상대 성향에 유리</u>' : cv < 0 ? ' · <u class="bad">상대 성향에 불리</u>' : ''}</em></button>`;
-      }).join('') + `</div>
-      <div class="rowopts"><div><h4>저격 밴 <span class="dim">챔피언 폭이 좁은 선수일수록 타격이 큽니다</span></h4>${opt('ban', -1, '없음')}${olu.map((p, i) => opt('ban', i, `${L.ROLE_KO[i]} ${esc(p.n)}`, ` <small>폭 ${p.a[L.AI.pool]}</small>`)).join('')}</div>
-      <div><h4>집중 라인</h4>${opt('focus', -1, '균형')}${opt('focus', 0, '탑')}${opt('focus', 1, '미드')}${opt('focus', 2, '바텀')}</div>
-      <div><h4>교전 성향</h4>${opt('aggro', 0, '신중하게')}${opt('aggro', 1, '보통')}${opt('aggro', 2, '공격적으로')}</div>
-      <div><h4>오브젝트 우선순위</h4>${opt('obj', 'balanced', '균형')}${opt('obj', 'dragon', '드래곤')}${opt('obj', 'towers', '타워·전령')}</div></div>
-      <div class="actions"><button class="btn primary" data-mact="start">경기 시작</button><button class="btn" data-mact="instant">결과만 보기</button></div></div></div>`;
-  }
   const stageKo = (m) => ({ reg: `정규 시즌 ${m.round || ''}라운드`, po1: '플레이오프 1라운드', po2: '플레이오프 준결승', final: '결승', playin: '플레이-인', groups: '그룹 스테이지', qf: '8강', sf: '4강', promo: '승강전' }[m.stage] || '');
 
   // 멀티플레이: 방장이 계산한 경기를 같은 설정으로 다시 돌려 본다 (세계 상태는 건드리지 않는다)
@@ -84,6 +55,7 @@
       st.particles = []; st.lastFx = 0; st.visualTime = 0; st.cameraTransform = null; st.lastCameraTargets = null; st.lastCombatTime = -Infinity; st.wp = null;
       st.match = new L.Match(cfg); st.evShown = 0; return;
     }
+    if (!st.draft?.complete) L.draftUI.ai(st,true);
     const s = W.get(); if (!st.spectate) s.teams[s.user].tactics = Object.assign({}, st.tac, { ban: -1 });
     st.oppTac = sim.aiTactics(st.opp, st.me);
     const blue = st.meBlue ? st.me : st.opp, red = st.meBlue ? st.opp : st.me;
@@ -91,7 +63,7 @@
     const cfg = sim.cfg(blue, red, st.m, st.meBlue ? st.tac : st.oppTac, st.meBlue ? st.oppTac : st.tac);
     cfg.sides[0].color = BLUE; cfg.sides[1].color = RED;
     cfg.visuals = true;
-    cfg.sides.forEach((s,si)=>s.players.forEach((p,i)=>p.champion=st.picks[si*5+i]));
+    L.competition.decorate(cfg,[blue,red],st.picks);
     st.particles = []; st.lastFx = 0; st.visualTime = 0; st.cameraTransform=null;st.lastCameraTargets=null;st.lastCombatTime=-Infinity;
     st.match = new L.Match(cfg); st.evShown = 0;
     if (st.spectate) { const i = st.me.lineup.indexOf(s.me); if (i >= 0) st.selected = (st.meBlue ? 0 : 5) + i; }
@@ -99,6 +71,7 @@
   function finishGame() {
     stopLoop();
     const res = st.match.result(), aBlue = st.ua ? st.meBlue : !st.meBlue;
+    res.draft=[{team:st.blue.id,picks:st.picks.slice(0,5)},{team:st.red.id,picks:st.picks.slice(5)}];res.bans=st.bans||[];
     sim.record(st, res, aBlue); if (!st.replay) sim.apply(st.blue, st.red, res);
     st.last = res; st.won = (res.winner === 0) === st.meBlue; st.boxes.push(res);
     if (!st.won) st.meBlue = true; else st.meBlue = false; // 진 팀이 블루 진영
@@ -136,7 +109,7 @@
       const m = st.match; if (!lastTs) lastTs = ts;
       const dt = Math.min(0.5, (ts - lastTs) / 1000); lastTs = ts;
       const fighting=m.fights.some(f=>f.members.some(p=>!p.dead&&p.side===0)&&f.members.some(p=>!p.dead&&p.side===1));
-      st.effectiveSpeed=st.combatSlow&&fighting?Math.min(5,SPEEDS[st.speed]):SPEEDS[st.speed];
+      st.effectiveSpeed=st.combatSlow&&fighting?Math.min(1,SPEEDS[st.speed]):SPEEDS[st.speed];
       acc += dt * st.effectiveSpeed;
       let n = 0; while (acc+1e-9 >= MAP.FIXED_DT && !m.done && n++ < 160) { m.step(MAP.FIXED_DT); acc -= MAP.FIXED_DT; }
       if (n >= 160) acc = 0;
@@ -151,7 +124,7 @@
   // ───────── 중계 알림 (퍼스트 블러드·멀티 킬·오브젝트) ─────────
   const MULTI = ['', '', '더블 킬!', '트리플 킬!', '쿼드라 킬!', '펜타 킬!'];
   function announce(m) {
-    if (st.annIdx == null) { st.annIdx = 0; st.annQ = []; st.multi = {}; st.annUntil = 0; }
+    if (st.annIdx == null) { st.annIdx = m.events.findIndex(e=>e.t>=m.t-3);if(st.annIdx<0)st.annIdx=m.events.length; st.annQ = []; st.multi = {}; st.annUntil = 0; }
     const rec = (n) => st.multi[n] || (st.multi[n] = { n: 0, t: -99, spree: 0 });
     while (st.annIdx < m.events.length) {
       const e = m.events[st.annIdx++], side = e.side ? 'red' : 'blue', team = m.sides[e.side] ? m.sides[e.side].short : '';
@@ -278,12 +251,6 @@
       <div class="actions"><button class="btn primary" data-mact="${over ? 'end' : 'next'}">${over ? '시리즈 종료' : '다음 세트'}</button></div></div>`;
   }
 
-  document.addEventListener('change',e=>{
-    const el=e.target.closest('[data-pick]');if(!el||!st||st.phase!=='draft')return;
-    const i=Number(el.dataset.pick), id=el.value;
-    if((i<5)!==st.meBlue||st.picks.includes(id)||!C.get(id)||C.get(id).year>W.get().year)return;
-    st.picks[i]=id;V.render();
-  });
   document.addEventListener('click', (e) => {
     const el = e.target.closest('[data-mact]'); if (!el || !st) return;
     const a = el.dataset.mact, k = el.dataset.k, v = el.dataset.v;

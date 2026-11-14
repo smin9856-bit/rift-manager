@@ -21,9 +21,10 @@
 
   // ───────── 시작 메뉴 ─────────
   UI.boot = function () {
-    $('#app').innerHTML = `<div class="start"><div class="logo">RIFT<span>MANAGER</span></div><p class="tag">2014–2026 · 실제 리그와 선수 데이터로 즐기는 e스포츠 구단 운영</p>
-      <div class="startbtns"><button class="btn primary big" data-act="ng">새 게임</button><button class="btn big" data-act="mpjoin">멀티플레이 참가</button>${W.hasSave(0) ? '<button class="btn big" data-act="loadgame">이어하기</button>' : ''}</div><a class="preview-link" href="match-preview.html">새로운 경기 중계 미리보기 ↗</a>
-      <p class="credit">선수·팀·대회 기록 출처: Leaguepedia (CC BY-SA 3.0). 능력치는 실제 경기 기록에서 계산한 추정치이며 비공식 팬 프로젝트입니다.<br>챔피언·스킬 이미지 © Riot Games · Data Dragon. Riot Games가 보증하거나 공식적으로 관여하는 프로젝트가 아닙니다.</p></div>`;
+    $('#app').innerHTML = `<div class="start"><div class="start-left"><h1 class="wordmark">Rift<span>Manager</span></h1><p class="tag">2014년부터 2026년까지, 실제 리그와 선수로 꾸리는 e스포츠 구단.</p>
+      <div class="menu">${W.hasSave(0) ? '<button data-act="loadgame">이어하기<small>마지막으로 저장한 게임</small></button>' : ''}<button data-act="ng">새 게임<small>감독, 구단주, 또는 선수로 시작</small></button><button data-act="mpjoin">멀티플레이 참가<small>방 코드로 친구의 리그에 합류</small></button></div>
+      <p class="credit">선수·팀·대회 기록은 Leaguepedia(CC BY-SA 3.0)에서 가져왔고, 능력치는 실제 경기 기록으로 계산한 추정치입니다. 챔피언·스킬 이미지 © Riot Games. 이 게임은 비공식 팬 프로젝트이며 Riot Games와 관련이 없습니다.</p></div>
+      <div class="start-art"><svg viewBox="0 0 600 600" fill="none" aria-hidden="true"><g transform="rotate(0 300 300)" stroke-linecap="round" stroke-linejoin="round"><path d="M70 530V130l60-60h400" stroke="#213341" stroke-width="34"/><path d="M70 530h400l60-60V70" stroke="#213341" stroke-width="34"/><path d="M70 530 530 70" stroke="#213341" stroke-width="34"/><path d="M150 150c90 60 110 110 150 150s70 70 150 150" stroke="#15364a" stroke-width="46"/><path d="M70 530V130l60-60h400M70 530h400l60-60V70M70 530 530 70" stroke="#2c4354" stroke-width="2" stroke-dasharray="2 10"/></g><g fill="#53a8ff"><rect x="62" y="330" width="16" height="16" transform="rotate(45 70 338)"/><rect x="62" y="410" width="16" height="16" transform="rotate(45 70 418)"/><rect x="232" y="522" width="16" height="16" transform="rotate(45 240 530)"/><rect x="152" y="522" width="16" height="16" transform="rotate(45 160 530)"/><rect x="222" y="362" width="16" height="16" transform="rotate(45 230 370)"/><rect x="162" y="422" width="16" height="16" transform="rotate(45 170 430)"/><circle cx="70" cy="530" r="22"/></g><g fill="#ff6b7c"><rect x="522" y="254" width="16" height="16" transform="rotate(45 530 262)"/><rect x="522" y="174" width="16" height="16" transform="rotate(45 530 182)"/><rect x="352" y="62" width="16" height="16" transform="rotate(45 360 70)"/><rect x="432" y="62" width="16" height="16" transform="rotate(45 440 70)"/><rect x="362" y="222" width="16" height="16" transform="rotate(45 370 230)"/><rect x="422" y="162" width="16" height="16" transform="rotate(45 430 170)"/><circle cx="530" cy="70" r="22"/></g><circle cx="395" cy="402" r="20" stroke="#c9b580" stroke-width="3"/><circle cx="205" cy="198" r="20" stroke="#c9b580" stroke-width="3"/></svg></div></div>`;
   };
   UI.newGame = function () {
     const ng = UI.ng, ys = G.LFM_YEARS.map((y) => y.year);
@@ -82,12 +83,11 @@
   };
 
   // ───────── 메인 화면 틀 ─────────
-  const NAV = [['home', '홈'], ['inbox', '알림'], ['squad', '스쿼드'], ['tactics', '전술'], ['training', '훈련'], ['schedule', '일정'], ['league', '리그'], ['world', '국제 대회'], ['transfers', '이적 시장'], ['youth', '유스'], ['staff', '감독'], ['biz', '수익 활동'], ['club', '구단'], ['mp', '멀티플레이']];
+  const NAV = [[null, '구단 일과'], ['home', '홈'], ['inbox', '알림'], ['schedule', '일정'], [null, '선수단'], ['squad', '스쿼드'], ['tactics', '전술'], ['training', '훈련'], ['youth', '유스'], [null, '운영'], ['transfers', '이적 시장'], ['staff', '감독'], ['biz', '수익 활동'], ['club', '구단'], [null, '대회'], ['league', '리그'], ['world', '국제 대회'], [null, '함께 하기'], ['mp', '멀티플레이']];
   const PNAV = [['home', '내 선수'], ['inbox', '알림'], ['pact', '활동'], ['pteam', '우리 팀'], ['poffers', '이적 제안'], ['schedule', '일정'], ['league', '리그'], ['world', '국제 대회']];
   UI.main = function () {
-    $('#app').innerHTML = `<div class="top"><div class="club" id="topClub"></div><div class="date" id="topDate"></div><div class="money" id="topMoney"></div>
-      <button class="btn" data-act="save">저장</button><button class="btn primary" id="btnCont" data-act="continue">계속 진행</button></div>
-      <div class="body"><nav id="nav"></nav><main id="main"></main></div>`;
+    $('#app').innerHTML = `<div class="shell"><aside class="rail"><div class="club" id="topClub"></div><nav id="nav"></nav><div class="railfoot"><button class="btn sm" data-act="save">저장</button><button class="btn sm" data-act="tomenu">메인 메뉴</button></div></aside>
+      <div class="stage"><header class="top"><div class="date" id="topDate"></div><div class="ticker" id="topNext"></div><div class="money" id="topMoney"></div><button class="btn primary" id="btnCont" data-act="continue">계속 진행</button></header><main id="main"></main></div></div>`;
     UI.go('home');
   };
   UI.toast = toast;
@@ -95,13 +95,16 @@
   UI.render = function () {
     if (UI.remote || !$('#topClub')) return;
     const s = S(), t = s.teams[s.user], lg = s.leagues[t.league], um = W.userMatchToday();
-    $('#topClub').innerHTML = `<i class="crest" style="background:${t.color}">${esc(t.short)}</i><div><b>${esc(t.name)}</b><span>${esc(lg.name)} · ${W.regionName(lg.region)}</span></div>`;
-    $('#topDate').innerHTML = `<b>${W.dateStr(s.day, s.year)}</b><span>${phase(s.day)}${W.windowOpen() ? ' · 이적 시장 열림' : ''}</span>`;
+    document.documentElement.style.setProperty('--club', t.color);
+    $('#topClub').innerHTML = `${crest(t)}<div><b>${esc(t.name)}</b><span>${esc(lg.name)}</span></div>`;
+    const dd = new Date(s.year, 0, 8 + s.day), nx = W.nextUserMatch();
+    $('#topDate').innerHTML = `<b>${dd.getMonth() + 1}월 ${dd.getDate()}일</b><span>${s.year}년 ${phase(s.day)}</span>`;
+    $('#topNext').innerHTML = (nx ? (nx.day === s.day ? `<b>오늘 경기</b> vs ${esc(s.teams[nx.a === s.user ? nx.b : nx.a].name)}` : `다음 경기 <b>${nx.day - s.day}일 뒤</b> vs ${esc(s.teams[nx.a === s.user ? nx.b : nx.a].name)}`) : '예정된 경기 없음') + (W.windowOpen() ? ' <span class="good">이적 시장 열림</span>' : '') + (L.net.role ? ` <span class="dim">방 ${esc(L.net.code)}</span>` : '');
     $('#topMoney').innerHTML = s.mode === 'player' ? `<span>내 자산</span><b>${money(s.cash)}</b>` : `<span>자금</span><b class="${t.money < 0 ? 'bad' : ''}">${money(t.money)}</b>`;
     $('#btnCont').textContent = L.net.role === 'guest' ? (L.net.myReady ? '준비 취소' : '준비 완료') : L.net.role === 'host' ? '계속 진행' : um ? '경기 준비' : '계속 진행';
     const unread = s.news.filter((n) => !n.read).length;
     const pm = s.mode === 'player';
-    $('#nav').innerHTML = (pm ? PNAV : NAV).map(([k, label]) => `<button class="${UI.screen === k ? 'sel' : ''}" data-act="go" data-s="${k}">${label}${k === 'inbox' && unread ? `<em>${unread}</em>` : ''}${k === 'transfers' && (s.offers || []).length ? `<em>${s.offers.length}</em>` : ''}${k === 'poffers' && (s.poffers || []).length ? `<em>${s.poffers.length}</em>` : ''}</button>`).join('');
+    $('#nav').innerHTML = (pm ? PNAV : NAV).map(([k, label]) => !k ? `<span class="navsec">${label}</span>` : `<button class="${UI.screen === k ? 'sel' : ''}" data-act="go" data-s="${k}">${label}${k === 'inbox' && unread ? `<em>${unread}</em>` : ''}${k === 'transfers' && (s.offers || []).length ? `<em>${s.offers.length}</em>` : ''}${k === 'poffers' && (s.poffers || []).length ? `<em>${s.poffers.length}</em>` : ''}</button>`).join('');
     $('#main').innerHTML = SCREENS[pm && UI.screen === 'home' ? 'phome' : UI.screen]();
   };
 
@@ -120,13 +123,19 @@
     home() {
       const s = S(), t = s.teams[s.user], nm = W.nextUserMatch(), c = userComp(), g = t.goalNow || W.goal(t);
       const recent = s.matches.filter((m) => m.res && (m.a === s.user || m.b === s.user)).slice(-5).reverse();
-      let next = '<p class="dim">예정된 경기가 없습니다.</p>';
-      if (nm) { const o = s.teams[nm.a === s.user ? nm.b : nm.a], cc = s.comps[nm.comp]; next = `<div class="nextm"><div><span class="dim">${W.shortDate(nm.day, s.year)} · ${esc(cc.name)}</span><h2>vs ${esc(o.name)}</h2>${starHtml(W.stars(o))} <span class="dim">상대 평균 능력 ${Math.round(W.teamOvr(o))} · 성향 ${L.STYLES[o.tactics.style].ko}</span></div>${nm.day === s.day ? '<button class="btn primary" data-act="continue">경기 준비</button>' : `<span class="dim">${nm.day - s.day}일 뒤</span>`}</div>`; }
-      return `${todos()}<div class="grid2"><section class="card"><h3>다음 경기</h3>${next}</section>
-        <section class="card"><h3>구단 현황</h3><div class="kv"><span>시즌 목표</span><b>${g.text}</b><span>이사회 신임도</span><b>${t.conf == null ? 60 : t.conf}</b><span>팀 전력</span><b>${starHtml(W.stars(t))} ${Math.round(W.teamOvr(t))}</b><span>팀 호흡</span><b>${Math.round(sim.synergy(t) * 100)}</b><span>주간 인건비</span><b>${money(Math.round(M.wages(t) / 48))}</b></div></section>
-        <section class="card"><h3>${esc(c.name)} 순위</h3>${standings(c, W.compMatches(c.id, 'reg'), c.teams)}</section>
-        <section class="card"><h3>최근 경기</h3>${recent.length ? table(['날짜', '대회', '', '', ''], recent.map(matchRow)) : '<p class="dim">아직 치른 경기가 없습니다.</p>'}
-          <h3 style="margin-top:18px">최근 소식</h3>${s.news.slice(0, 5).map((n) => `<div class="newsline ${n.read ? '' : 'unread'}" data-act="go" data-s="inbox"><span class="dim">${W.shortDate(n.day, n.year)}</span> ${esc(n.title)}</div>`).join('')}</section></div>`;
+      const rankOf = (tid) => { const lgc = s.comps[`${s.teams[tid].league}:summer`] || s.comps[`${s.teams[tid].league}:spring`]; if (!lgc) return ''; const i = W.table(W.compMatches(lgc.id, 'reg'), lgc.teams).findIndex((x) => x.t === tid); return i >= 0 ? `리그 ${i + 1}위` : ''; };
+      const side = (x, away, extra) => `<div class="md-team ${away ? 'away' : ''}">${crest(x)}<div><h2>${esc(x.name)}</h2><span>${rankOf(x.id)}${extra ? ` ${extra}` : ''}</span>${formRow(x.id)}</div></div>`;
+      let hero;
+      if (nm) {
+        const o = s.teams[nm.a === s.user ? nm.b : nm.a], cc = s.comps[nm.comp], today = nm.day === s.day;
+        hero = `<section class="matchday">${side(t, 0, `전력 ${Math.round(W.teamOvr(t))}`)}
+          <div class="md-mid"><small>${esc(cc.name)}</small><div class="vs">VS</div><em>${today ? '오늘 경기' : `${W.shortDate(nm.day, s.year)}, ${nm.day - s.day}일 뒤`}</em>${today ? `<button class="btn primary" data-act="continue">${L.net.role === 'host' ? '경기 진행' : '경기 준비'}</button>` : ''}</div>
+          ${side(o, 1, `전력 ${Math.round(W.teamOvr(o))}, ${L.STYLES[o.tactics.style].ko} 조합`)}</section>`;
+      } else hero = `<section class="matchday"><div class="md-team">${crest(t)}<div><h2>${esc(t.name)}</h2><span>${rankOf(t.id)}</span></div></div><div class="md-mid"><em>예정된 경기가 없습니다</em></div><div></div></section>`;
+      return `${hero}${todos()}<div class="home3"><div><section class="card"><h3>${esc(c.name)} 순위</h3>${standings(c, W.compMatches(c.id, 'reg'), c.teams)}</section></div>
+        <div><section class="card"><h3>구단 현황</h3><div class="kv"><span>시즌 목표</span><b>${g.text}</b><span>이사회 신임도</span><b>${bar(t.conf == null ? 60 : t.conf)} ${t.conf == null ? 60 : t.conf}</b><span>팀 전력</span><b>${starHtml(W.stars(t))} ${Math.round(W.teamOvr(t))}</b><span>팀 호흡</span><b>${bar(sim.synergy(t) * 100)} ${Math.round(sim.synergy(t) * 100)}</b><span>감독</span><b>${L.staff.of(t) ? esc(L.staff.of(t).n) : '-'}</b><span>주간 인건비</span><b>${money(Math.round(M.wages(t) / 48))}</b></div></section>
+        <section class="card"><h3>최근 경기</h3>${recent.length ? table(['날짜', '대회', '', '', ''], recent.map(matchRow)) : '<p class="dim">아직 치른 경기가 없습니다.</p>'}</section>
+        <section class="card"><h3>알림</h3>${s.news.slice(0, 6).map((n) => `<div class="newsline ${n.read ? '' : 'unread'}" data-act="go" data-s="inbox"><span class="dim">${W.shortDate(n.day, n.year)}</span><span>${esc(n.title)}</span></div>`).join('') || '<p class="dim">새 알림이 없습니다.</p>'}</section></div></div>`;
     },
     inbox() {
       const s = S(); const html = s.news.slice(0, 80).map((n) => `<article class="news ${n.read ? '' : 'unread'}"><header><b>${esc(n.title)}</b><span class="dim">${W.dateStr(n.day, n.year)}</span></header><p>${esc(n.body)}</p></article>`).join('');
@@ -364,6 +373,8 @@
     return out.length ? `<section class="card todo"><h3>지금 할 일</h3>${out.map(([cls, text, act, label]) => `<div class="todoitem ${cls}"><span>${esc(text)}</span><button class="btn sm" data-act="${act}">${label}</button></div>`).join('')}</section>` : '';
   };
 
+  const crest = (x) => `<i class="crest" style="background:${x.color}">${esc(String(x.short).slice(0, 4))}</i>`;
+  const formRow = (tid) => { const s = S(), r = s.matches.filter((m) => m.res && (m.a === tid || m.b === tid)).slice(-5); return r.length ? `<div class="formrow">${r.map((m) => { const w = (m.res.s[0] > m.res.s[1]) === (m.a === tid); return `<i class="${w ? 'w' : 'l'}">${w ? '승' : '패'}</i>`; }).join('')}</div>` : ''; };
   const bar = (v) => `<span class="mbar"><i style="width:${Math.max(4, Math.min(100, v))}%;background:${v > 66 ? '#4fd67a' : v > 33 ? '#e6c44a' : '#f0564a'}"></i></span>`;
   const pct = (v) => (v >= 1 ? '+' : '') + Math.round((v - 1) * 100) + '%';
 
@@ -436,14 +447,14 @@
     const wait = N.waiting();
     if (wait.length && !UI.forceGo) { UI.forceGo = true; return toast(`아직 준비하지 않은 참가자: ${wait.map((g) => g.name).join(', ')}. 한 번 더 누르면 그대로 진행합니다.`, 1); }
     UI.forceGo = false; busy = true; const s = S(), ov = $('#overlay'); ov.classList.add('on');
-    const last = s.news[0] ? s.news[0].id : 0; let pkg = null;
+    const pressLast=s.pressLast; const last = s.news[0] ? s.news[0].id : 0; let pkg = null;
     for (let i = 0; i < 21; i++) {
       ov.textContent = `${W.dateStr(s.day, s.year)} 진행 중…`; await sleep();
       const hm = N.humanMatches();
       if (hm.length) { for (const m of hm) { const p = N.playHuman(m); if (p) pkg = p; } W.advance(); break; }
       W.advance();
       if (N.humanMatches().length) break;
-      if (s.news[0] && s.news[0].id !== last) break;
+      if (s.pressLast!==pressLast || s.news[0] && s.news[0].id !== last) break;
     }
     ov.classList.remove('on'); busy = false; N.ready = {}; N.sync();
     if (s.day % 7 === 0) { try { W.save(0); } catch (e) { /* 무시 */ } }
@@ -467,12 +478,12 @@
     if (busy || V.active()) return;
     const um = W.userMatchToday(); if (um) return UI.openMatch(um);
     busy = true; const s = S(), ov = $('#overlay'); ov.classList.add('on');
-    const last = s.news[0] ? s.news[0].id : 0;
+    const pressLast=s.pressLast; const last = s.news[0] ? s.news[0].id : 0;
     for (let i = 0; i < 21; i++) {
       ov.textContent = `${W.dateStr(s.day, s.year)} 진행 중…`; await sleep();
       const r = W.advance(); if (r.match) break;
       if (W.userMatchToday()) break;
-      if (s.news[0] && s.news[0].id !== last) break;
+      if (s.pressLast!==pressLast || s.news[0] && s.news[0].id !== last) break;
     }
     ov.classList.remove('on'); busy = false;
     if (s.day % 7 === 0) { try { W.save(0); } catch (e) { /* 무시 */ } }
@@ -521,6 +532,7 @@
     mpjoin: () => UI.mpJoin(), mpjoingo: () => { const c = $('#mpCode').value.trim(), n = $('#mpName').value.trim(); if (c.length < 5 || n.length < 1) return toast('방 코드 5자와 이름을 입력하세요.', 1); L.net.join(c, n); UI.mpJoin(); },
     mppick: (d) => { L.net.send({ t: 'pick', tid: d.id }); $('#app').innerHTML = '<div class="wizard"><h2>방장의 세계를 불러오는 중…</h2></div>'; },
     mphost: () => { L.net.host(); UI.render(); },
+    tomenu: () => { if (L.net.role) return toast('멀티플레이 중에는 메인 메뉴로 나갈 수 없습니다. 창을 닫으면 방에서 나갑니다.', 1); try { if (W.managed(S().user) || S().mode === 'player') W.save(0); } catch (e) { /* 무시 */ } UI.boot(); },
     hirecoach: (d) => { const r = L.staff.hire(d.id); toast(r.msg, !r.ok); UI.render(); },
     deal: (d) => { const r = L.staff.pickDeal(Number(d.i)); toast(r.msg, !r.ok); UI.render(); },
     fanevent: () => { const r = L.staff.fanEvent(); toast(r.msg, !r.ok); UI.render(); }, gobiz: () => UI.go('biz'),

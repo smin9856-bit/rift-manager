@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';import '../js/core.js';import '../data/champions.js';import '../js/champions.js';import '../js/engine.js';import '../js/abilities.js';
+const L=LFM;
+function duel(id){const cfg={seed:42,visuals:true,year:2026,sides:[0,1].map(s=>({name:'T'+s,players:Array.from({length:5},(_,i)=>({id:s*5+i,n:'P'+i,r:i,champion:s?'Garen':id,a:Array(10).fill(14)}))}))};const m=new L.Match(cfg);m.all.forEach(p=>p.dead=9999);const p=m.all[0],q=m.all[5];for(const a of[p,q]){a.dead=0;a.hp=3000;a.life=0;a.y=400;a.lvl=12;}p.x=400;q.x=550;return {m,p,q};}
+function tick(m,n){for(let i=0;i<n;i++){m.t+=.05;m.move(.05);m.resolveBodies();m.updateProjectiles(.05);}}
+{const {m,p,q}=duel('Ahri');m.launchAttack(p,q,100,null,'spell',2);tick(m,20);assert(q.stun>m.t);assert.equal(q.ccLabel,'매혹');assert(q.hp<3000);}
+{const {m,p,q}=duel('Blitzcrank'),old=q.x;m.launchAttack(p,q,100,null,'spell',0);tick(m,28);assert(q.x<old-50,'Hook pulls in world coordinates');assert(Math.hypot(q.x-p.x,q.y-p.y)>=49.5);}
+{const {m,p,q}=duel('Malphite');m.launchAttack(p,q,100,null,'ultimate',3);tick(m,25);assert(p.x>450);assert.equal(q.ccLabel,'공중에 뜸');assert(q.hp<3000);}
+{const {m,p,q}=duel('Lulu');p.hp=100;m.launchAttack(p,q,100,null,'spell',2);tick(m,7);assert(p.shield>0);const hp=p.hp;m.hit(q,p,100,null,'attack');assert.equal(p.hp,hp,'Shield absorbs damage');assert.equal(q.hp,3000,'Defensive spell is not an attack');}
+{const {m,p,q}=duel('Soraka');p.hp=100;m.launchAttack(p,q,100,null,'spell',1);tick(m,7);assert(p.hp>100);assert.equal(q.hp,3000);}
+{const {m,p,q}=duel('Lux');m.launchAttack(p,q,100,null,'spell',0);q.y=650;tick(m,30);assert.equal(q.hp,3000,'Skillshot misses moving target instead of homing');}
+{const {m,p,q}=duel('Ahri');q.x=500;m.launchAttack(p,q,100,null,'spell',0);tick(m,13);const hp=q.hp;assert(hp<3000);tick(m,60);assert(q.hp<hp,'Orb returns and hits again');}
+for(const id of Object.keys(L.champions.all))for(let slot=0;slot<4;slot++){const a=L.abilities.get(id,slot);assert(a.type,id+' '+slot);assert(Number.isFinite(L.abilities.range(id,slot)));}
+{const {m,p,q}=duel('Mordekaiser');m.launchAttack(p,q,100,null,'ultimate',3);tick(m,13);const other=m.all[1];other.dead=0;other.hp=500;const hp=q.hp;m.hit(other,q,100,null,'attack');assert.equal(q.hp,hp);m.hit(p,q,100,null,'attack');assert(q.hp<hp);}
+{const {m,p,q}=duel('Tryndamere');m.launchAttack(p,q,100,null,'ultimate',3);tick(m,13);p.hp=10;m.hit(q,p,10000,null,'attack');assert(!p.dead);assert(p.hp>0);}
+for(const id of Object.keys(L.champions.all))for(let slot=0;slot<4;slot++){assert(L.abilities.hasProfile(id));const {m,p,q}=duel(id);m.launchAttack(p,q,80,null,slot===3?'ultimate':'spell',slot);tick(m,100);assert(m.all.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.hp)),id+' '+slot);}
+const cfg={seed:42,year:2026,sides:[0,1].map(s=>({name:'T'+s,players:['Malphite','LeeSin','Ahri','Ashe','Lulu'].map((c,i)=>({id:s*5+i,n:c,r:i,champion:c,a:Array(10).fill(14)}))}))};const a=L.simulate({...cfg,visuals:true}),b=L.simulate(cfg);assert.deepEqual(a,b);assert(a.duration>600&&a.duration<=6000);console.log('PASS: charm, hook displacement, dash/airborne, shield absorption, healing, aimed miss, returning orb, all 692 profiles and deterministic full match.');

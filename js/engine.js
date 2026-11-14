@@ -92,7 +92,7 @@
     m.fights = []; m.firstBlood = false; m.nextMacro = 75; m.proxAcc = 0; m.fleeAcc = 0;
     m.sides = cfg.sides.map((s, si) => {
       const tac = Object.assign({ style: 'teamfight', focus: -1, aggro: 1, obj: 'balanced', ban: -1 }, s.tactics || {});
-      const side = {
+      const side = { composition:s.composition,
         i: si, name: s.name, short: s.short || s.name, color: s.color, tactics: tac, coach: s.coach || 10,
         synergy: s.synergy == null ? 0.5 : s.synergy, plan: null, dragons: 0, soul: false, baronUntil: 0, elderUntil: 0,
         herald: false, kills: 0, towers: 0, barons: 0, players: [],
@@ -123,6 +123,7 @@
         mult *= st.includes(side.tactics.style) || skk === 'flex' ? 1.02 : 1 - (20 - pool) * 0.003;
         if (enemyTac.ban === role && skk !== 'flex') mult *= 0.99 - (20 - pool) * 0.005;
         if (p.r != null && p.r !== role) mult *= 0.88;
+        mult *= p.draftFactor || 1;
         const b = BASE[si];
         side.players.push({ skk, sks, skn: sk ? sk[0] : '', dice, streakUntil: 0,
           p, side: si, role, lane: LANE_OF[role], idx: si * 5 + role, x: si ? 840+(role%3)*55 : 50+(role%3)*55, y: si ? 55+Math.floor(role/3)*55 : 890-Math.floor(role/3)*55,
@@ -183,6 +184,7 @@
     if (t < 840) ph = S.early; else if (t < 1680) ph = S.early + (S.mid - S.early) * Math.min(1, (t - 840) / 300);
     else ph = S.mid + (S.late - S.mid) * Math.min(1, (t - 1680) / 400);
     let v = ph * (1 + L.COUNTER[s.tactics.style][o.tactics.style] * (1 + (s.coach - 10) * 0.03));
+    v *= s.composition?.factor || 1;
     v *= 1 + (s.synergy - 0.5) * 0.06;
     v *= 1 + s.dragons * 0.018 + (s.soul ? 0.06 : 0);
     if (t < s.baronUntil) v *= 1.06;
@@ -226,7 +228,7 @@
     if (m.visuals) m.fx = m.fx.filter(e => t - e.t < 8);
     for (const pl of m.all) {
       if (pl.dead) {
-        if (t >= pl.dead) { pl.dead = 0; const b = BASE[pl.side]; pl.x = b.x+(pl.role%2?40:-25); pl.y = b.y+(pl.side?1:-1)*Math.floor(pl.role/2)*53;pl.px=pl.x;pl.py=pl.y;pl.vx=pl.vy=0;pl.life++; pl.spent = pl.gold; pl.hp = m.mhp(pl); pl.path = null; pl.dest = null; pl.task = 'lane'; pl.hitBy = {}; }
+        if (t >= pl.dead) { pl.dead = 0; const b = BASE[pl.side]; m.land(pl,{x:b.x+(pl.role%2?40:-25),y:b.y+(pl.side?1:-1)*Math.floor(pl.role/2)*53});pl.life++; pl.spent = pl.gold; pl.hp = m.mhp(pl); pl.path = null; pl.dest = null; pl.task = 'lane'; pl.hitBy = {}; }
         else continue;
       }
       if (t > 110) pl.gold += 2.04 * dt;
@@ -350,10 +352,10 @@
   P.assign = function (pl, dt) {
     const m = this, t = m.t, s = m.sides[pl.side], dir = pl.side === 0 ? 1 : -1;
     if (pl.fight || pl.stun > t) return;
-    if (pl.tp) { if (t >= pl.tp.until) { pl.x = pl.tp.x; pl.y = pl.tp.y; pl.px = pl.x; pl.py = pl.y; pl.tp = null; pl.path = null; pl.dest = null; } return; }
+    if (pl.tp) { if (t >= pl.tp.until) { m.land(pl,pl.tp); pl.tp = null; pl.path = null; pl.dest = null; } return; }
     if (pl.recall) {
       if (t >= pl.recall) {
-        const b = BASE[pl.side]; pl.x = b.x; pl.y = b.y; pl.px = pl.x; pl.py = pl.y; pl.recall = 0; pl.spent = pl.gold; pl.hp = m.mhp(pl); pl.path = null; pl.dest = null;
+        const b = BASE[pl.side]; m.land(pl,b); pl.recall = 0; pl.spent = pl.gold; pl.hp = m.mhp(pl); pl.path = null; pl.dest = null;
         m.say(pl, pl.role === JGL ? '정비 후 정글 복귀' : `정비 후 ${LANE_KO[pl.lane]} 복귀`, 9);
       }
       return;
@@ -440,7 +442,13 @@
       if(correction<.01)break;
     }
   };
-  P.attackRange = function(p){const ch=L.champions?.get(p.champion);return ch?(ch.range>300?clamp(ch.range*.26,120,180):68):([68,68,155,160,125][p.role]);};
+  P.land = function(p,desired){
+    for(let r=0;r<=220;r+=28)for(let i=0;i<(r?24:1);i++){const a=i*Math.PI/12,q={x:clamp(desired.x+Math.cos(a)*r,28,972),y:clamp(desired.y+Math.sin(a)*r,36,964)};
+      if(this.all.some(other=>other!==p&&!other.dead&&dist(q,other)<BODY*2+4)||WALLS.some(w=>dist(q,w)<w.r+BODY+2))continue;
+      p.x=q.x;p.y=q.y;p.px=q.x;p.py=q.y;p.vx=p.vy=0;return;
+    }
+  };
+  P.attackRange = function(p){const ch=L.champions?.get(p.champion);return ch?Math.max(60,ch.range*.25):([68,68,155,160,125][p.role]);};
   P.launchAttack = function(src,target,amount,F,kind='attack',slot=-1,splash=0) {
     if(src.dead||target.dead)return;
     const profile=L.champions?.profile(src.champion),melee=kind==='attack'&&this.attackRange(src)<90&&target.idx!=null;
@@ -457,21 +465,24 @@
     const keep=[];
     for(const s of this.projectiles){
       const src=this.all[s.source]||s.sourceObj,target=this.all[s.target]||s.targetObj;
-      if(this.t>s.expires||target.dead||target.hp<=0||target.life!==s.life)continue;
+      if(this.t>s.expires||((s.homing||s.melee||target.idx==null)&&(target.dead||target.hp<=0||target.life!==s.life)))continue;
       if(!s.launched){if(src.dead||src.hp<=0||src.life!==s.sourceLife)continue;s.x=src.x;s.y=src.y;s.px=s.x;s.py=s.y;if(this.t<s.launch){keep.push(s);continue;}
-        s.launched=true;s.tx=target.x;s.ty=target.y;const d=dist(src,target)||1;s.dx=(s.tx-s.x)/d;s.dy=(s.ty-s.y)/d;
+        s.launched=true;if(!s.fixedAim){s.tx=target.x;s.ty=target.y;}const d=Math.hypot(s.tx-s.x,s.ty-s.y)||1;s.dx=(s.tx-s.x)/d;s.dy=(s.ty-s.y)/d;
       }
       s.px=s.x;s.py=s.y;
-      if(s.homing){const d=Math.hypot(target.x-s.x,target.y-s.y)||1;s.dx=(target.x-s.x)/d;s.dy=(target.y-s.y)/d;}
+      if(s.homing||s.returning){const aim=s.returning?src:target,d=Math.hypot(aim.x-s.x,aim.y-s.y)||1;s.dx=(aim.x-s.x)/d;s.dy=(aim.y-s.y)/d;}
       if(s.melee){if(dist(src,target)<=this.attackRange(src)+12)this.hit(src,target,s.amount,s.F,'melee',s.slot);continue;}
       const travel=Math.min(s.speed*dt,s.maxTravel-s.traveled);s.traveled+=travel;s.x+=s.dx*travel;s.y+=s.dy*travel;
       let victim=null;
-      const candidates=s.homing?[target]:this.all.filter(p=>!p.dead&&p.side!==s.side);
+      const candidates=(s.homing&&!s.returning?[target]:this.all.filter(p=>!p.dead&&p.side!==s.side)).filter(p=>!s.hits?.includes(p.idx));
       // Swept segment collision: fast projectiles cannot tunnel through a unit.
-      for(const p of candidates)if(segmentDistance({x:s.px,y:s.py},s,p)<=BODY+5){if(!victim||dist({x:s.px,y:s.py},p)<dist({x:s.px,y:s.py},victim))victim=p;}
-      if(victim){if(victim.idx==null)this.worldImpact(src,victim,s.amount);else this.hit(s.source==null?null:src,victim,s.amount,s.F,s.kind,s.slot);
+      for(const p of candidates)if(segmentDistance({x:s.px,y:s.py},s,p)<=BODY+(s.ability?.width||5)){if(!victim||dist({x:s.px,y:s.py},p)<dist({x:s.px,y:s.py},victim))victim=p;}
+      if(victim){if(victim.idx==null)this.worldImpact(src,victim,s.amount);else if(!this.abilityImpact?.(s,src,victim))this.hit(s.source==null?null:src,victim,s.amount,s.F,s.kind,s.slot);
         if(s.splash>0){const nearby=this.all.filter(p=>!p.dead&&p.side!==s.side&&p!==victim&&dist(p,victim)<(s.slot===3?110:75));for(const p of nearby)this.hit(src,p,s.splash/nearby.length,s.F,'splash',-1);}
-      }else if(s.traveled<s.maxTravel)keep.push(s);
+      }
+      if(s.ability?.pierce&&victim)(s.hits ||= []).push(victim.idx);
+      if(s.traveled>=s.maxTravel&&s.ability?.returning&&!s.returning){s.returning=true;s.hits=[];s.traveled=0;s.maxTravel=dist(s,src)+25;}
+      if((!victim||s.ability?.pierce)&&s.traveled<s.maxTravel&&!(s.returning&&dist(s,src)<25))keep.push(s);
     }
     this.projectiles=keep;
   };
@@ -726,6 +737,7 @@
     const m = this, t = m.t, o = m.sides[1 - v.side];
     let killer = src;
     if (!killer) { let bt = -1; for (const k in v.hitBy) if (v.hitBy[k] > bt && t - v.hitBy[k] < 12) { bt = v.hitBy[k]; killer = m.all[k]; } }
+    v.dash=null;v.forced=null;v.realm=null;v.reflectUntil=v.undyingUntil=v.unstoppableUntil=0;v.timeHistory=[];v.rootUntil=v.slowUntil=v.silenceUntil=v.blindUntil=v.shieldUntil=v.invulnerableUntil=v.reviveUntil=v.buffUntil=v.resistUntil=0;v.shield=0;
     v.d++; v.hp = 0; v.fight = null; v.path = null; v.recall = 0; v.tp = null; v.gank = null;
     v.dead = t + Math.min(66, 8 + v.lvl * 2.7 + Math.max(0, t - 1300) / 40);
     const bounty = clamp(300 + v.streak * 70 - Math.max(0, v.d - v.k - 2) * 30, 120, 800);
@@ -779,8 +791,8 @@
               if (w > bw) { bw = w; p.tgt = e; }
             }
           }
-          if(dist(p,p.tgt)>m.attackRange(p)+10)continue;
-          p.attackReady=t+1;
+
+          if(p.champion==='Yasuo'&&p.lvl>=6&&p.cooldowns[3]<=t){const airborne=live.find(q=>q.stun>t&&q.ccLabel==='공중에 뜸'&&dist(p,q)<=L.abilities.range('Yasuo',3));if(airborne)p.tgt=airborne;}
           const late = p.role === ADC ? 0.85 + Math.min(1, t / 2100) * 0.4 : 1;
           const dmg = m.pow(p) * 0.3 * ROLE_DMG[p.role] * late * m.skill(p) * tm[si] * coord * dt * m.rnd.range(0.6, 1.4) * m.skOut(p, F);
           const others = live.filter((e) => e !== p.tgt), sp = others.length ? 0.28 * (0.6 + m.eff(p, I.tf) / 25) : 0;
@@ -788,13 +800,15 @@
           let slot = -1;
           if (ch) {
             const order = p.lvl >= 6 ? [3, 0, 1, 2] : [0, 1, 2].slice(0, Math.min(3, p.lvl));
-            slot = order.find(i => p.cooldowns[i] <= t) ?? -1;
+            slot = p.silenceUntil>t ? -1 : order.find(i => p.cooldowns[i] <= t && (!L.abilities || (L.abilities.get(p.champion,i).type!=='passive' && L.abilities.canCast(m,p,p.tgt,i) && dist(p,p.tgt)<=L.abilities.range(p.champion,i)+25))) ?? -1;
             if (slot >= 0) {
               const cds = ch.spells[slot].cooldown, rank = slot === 3 ? Math.min(2, Math.floor((p.lvl - 6) / 5)) : Math.min(cds.length - 1, Math.floor(p.lvl / 3));
-              p.cooldowns[slot] = t + Math.max(slot === 3 ? 30 : 4, cds[rank] || 8);
+              p.cooldowns[slot] = t + Math.max(.25, cds[rank] || 8);
               p.castSlot = slot; p.castUntil = t + .6;
             }
           }
+          if(slot<0&&dist(p,p.tgt)>m.attackRange(p)+10)continue;
+          p.attackReady=t+1;
           m.launchAttack(p,p.tgt,dmg*(slot>=0?1-sp:1),F,slot>=0?(slot===3?'ultimate':'spell'):'attack',slot,slot>=0?dmg*sp:0);
         }
       }

@@ -4,6 +4,7 @@ import '../js/core.js';
 import '../data/champions.js';
 import '../js/champions.js';
 import '../js/engine.js';
+import '../js/abilities.js';
 const L=globalThis.LFM,C=L.champions;
 assert.equal(Object.keys(C.all).length,173);
 for(const c of Object.values(C.all)) {
@@ -22,7 +23,7 @@ for(let seed=1;seed<=8;seed++) {
   const m=new L.Match({...cfg,visuals:true});let last=0;
   while(!m.done){m.step(1);assert(m.fx.length<=160);for(const e of m.fx.filter(e=>e.id>last)) {
     assert(Number.isFinite(e.amount));assert(Number.isFinite(e.tx));assert(Number.isFinite(e.ty));
-    if(e.slot>=0){castCount++;const p=m.all[e.source];assert(p.cooldowns[e.slot]>m.t);if(e.slot===3){ultCount++;assert(p.lvl>=6);}}
+    if(e.slot>=0){castCount++;const p=m.all[e.source];if(e.kind==='cast')assert(p.cooldowns[e.slot]>e.t);if(e.slot===3){ultCount++;assert(p.lvl>=6);}}
   }last=m.fxSeq;}
   assert.deepEqual(m.result(),L.simulate(cfg),'Rendering must not change match outcome');
 }

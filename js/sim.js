@@ -50,8 +50,11 @@
   const KW = [0.2, 0.18, 0.25, 0.3, 0.07], DW = [0.22, 0.2, 0.19, 0.17, 0.22], AW = [0.15, 0.25, 0.2, 0.15, 0.25];
   function spread(n, w, R) { const out = [0, 0, 0, 0, 0]; for (let i = 0; i < n; i++) { let x = R(), k = 0; while (k < 4 && x > w[k]) { x -= w[k]; k++; } out[k]++; } return out; }
   // 간이 시뮬레이션: 다른 리그 경기용. 엔진과 같은 승률 곡선을 쓴다.
-  sim.quick = function (blue, red, m, tacB, tacR) {
-    const R = W.rng(), pa = sim.power(blue, tacB, tacR), pb = sim.power(red, tacR, tacB);
+  sim.quick = function (blue, red, m, tacB, tacR, draft) {
+    const D=L.competition;
+    draft=draft||(D&&D.draft([blue,red],m,[tacB,tacR],m.res?.g||[],m.id));
+    const factor=(t,si,tac)=>!draft?1:D.summary(draft.picks.slice(si*5,si*5+5),tac.style).factor*sim.lineup(t).reduce((a,p,i)=>a+(.82+D.mastery(p,draft.picks[si*5+i])*.0032)*(L.champions.pool(i,S().year).includes(draft.picks[si*5+i])?1:.86),0)/5;
+    const R = W.rng(), pa = sim.power(blue, tacB, tacR)*factor(blue,0,tacB), pb = sim.power(red, tacR, tacB)*factor(red,1,tacR);
     const w = R() < 1 / (1 + Math.exp(-0.135 * (pa - pb))) ? 0 : 1, dur = 1500 + R() * 1100;
     const kw = Math.max(5, Math.round(R.norm(15, 4))), kl = clamp(Math.round(R.norm(8.5, 3.5)), 1, kw + 3), kills = w === 0 ? [kw, kl] : [kl, kw];
     const players = [];
@@ -59,10 +62,10 @@
       const k = spread(kills[si], KW, R), d = spread(kills[1 - si], DW, R), a = spread(Math.round(kills[si] * 1.9), AW, R);
       sim.lineup(t).forEach((p, i) => {
         const r = clamp(6.2 + clamp(((k[i] * 3 + a[i] * 1.2 - d[i] * 2.6) / (dur / 60)) * 1.5, -1.9, 2.2) + (si === w ? 0.5 : -0.3) + R.norm(0, 0.3), 3, 10);
-        players.push({ id: p.id, n: p.n, side: si, role: i, k: k[i], d: d[i], a: a[i], rating: r });
+        players.push({ champion:draft?.picks[si*5+i], id: p.id, n: p.n, side: si, role: i, k: k[i], d: d[i], a: a[i], rating: r });
       });
     });
-    return { winner: w, duration: dur, kills, players, quick: 1 };
+    return { winner: w, duration: dur, kills, players, draft:draft?[{team:blue.id,picks:draft.picks.slice(0,5)},{team:red.id,picks:draft.picks.slice(5)}]:[],bans:draft?.bans||[], quick: 1 };
   };
 
   // 한 경기 결과를 선수·팀에 반영
@@ -70,6 +73,7 @@
     const s = S();
     for (const pr of res.players) {
       const p = s.players[pr.id]; if (!p) continue; const win = pr.side === res.winner;
+      if(pr.champion){p.championPractice ||= {};p.championPractice[pr.champion]=Math.min(80,(p.championPractice[pr.champion]||0)+.18);}
       p.ss.g++; if (win) p.ss.w++; p.ss.k += pr.k; p.ss.d += pr.d; p.ss.a += pr.a; p.ss.r += pr.rating;
       p.form = clamp(p.form + (pr.rating - 6.5) * 0.005, 0.92, 1.08);
       p.mor = clamp(p.mor + (win ? 0.018 : -0.02) + (pr.rating > 8 ? 0.01 : 0), 0.05, 1);
@@ -90,7 +94,10 @@
     while (m.res.s[0] < need && m.res.s[1] < need) {
       const ta = sim.aiTactics(a, b), tb = sim.aiTactics(b, a);
       const blue = aBlue ? a : b, red = aBlue ? b : a, tB = aBlue ? ta : tb, tR = aBlue ? tb : ta;
-      const res = full ? L.simulate(sim.cfg(blue, red, m, tB, tR)) : sim.quick(blue, red, m, tB, tR);
+      const draft=L.competition?.draft([blue,red],m,[tB,tR],m.res.g,m.id+':'+m.res.g.length);
+      let cfg;if(full){cfg=sim.cfg(blue,red,m,tB,tR);if(draft)L.competition.decorate(cfg,[blue,red],draft.picks);}
+      const res = full ? L.simulate(cfg) : sim.quick(blue, red, m, tB, tR,draft);
+      if(draft){res.draft=[{team:blue.id,picks:draft.picks.slice(0,5)},{team:red.id,picks:draft.picks.slice(5)}];res.bans=draft.bans;}
       sim.record(m, res, aBlue); sim.apply(blue, red, res);
       aBlue = (res.winner === 0) === aBlue ? !aBlue : aBlue; // 진 팀이 블루 진영 선택
     }
@@ -99,7 +106,7 @@
   sim.record = function (m, res, aBlue) {
     const aw = (res.winner === 0) === aBlue;
     m.res.s[aw ? 0 : 1]++;
-    m.res.g.push({ w: aw ? 0 : 1, dur: Math.round(res.duration), k: aBlue ? res.kills : [res.kills[1], res.kills[0]] });
+    m.res.g.push({ draft:res.draft||[],bans:res.bans||[], w: aw ? 0 : 1, dur: Math.round(res.duration), k: aBlue ? res.kills : [res.kills[1], res.kills[0]] });
   };
   sim.finishSeries = function (m) {
     const s = S(), a = s.teams[m.a], b = s.teams[m.b], aw = m.res.s[0] > m.res.s[1];
